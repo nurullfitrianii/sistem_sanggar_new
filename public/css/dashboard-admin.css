@@ -1,0 +1,33 @@
+/* Dashboard Admin Shared Styles */
+:root {
+    --sanggar-primary: #A47251;
+    --sanggar-secondary: #DD9E59;
+    --sanggar-dark: #2D241E;
+    --sanggar-light: #FFFFFF;
+}
+
+.hover-lift {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.bg-soft-primary { background-color: rgba(164, 114, 81, 0.1); }
+.bg-soft-warning { background-color: rgba(221, 158, 89, 0.1); }
+.bg-soft-secondary { background-color: rgba(67, 52, 34, 0.05); }
+.bg-soft-success { background-color: rgba(25, 135, 84, 0.1); }
+.bg-soft-danger { background-color: rgba(220, 53, 69, 0.1); }
+
+.border-sanggar-secondary { border-color: var(--sanggar-secondary) !important; }
+.text-sanggar-secondary { color: var(--sanggar-secondary) !important; }
+
+.card-outline {
+    background: #FFFFFF;
+    border-radius: 1.25rem;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.01);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

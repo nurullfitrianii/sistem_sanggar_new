@@ -1,0 +1,39 @@
+/* Beranda Styles */
+header h2 {
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
+    position: relative;
+    z-index: 20;
+    margin-bottom: 70px !important; /* Jarak aman ke subjudul */
+}
+
+/* Overlay standar agar foto tetap kelihatan jelas tapi teks terbaca */
+.header-overlay {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* Dropdown Galeri Fix */
+.group:hover .dropdown-content {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.dropdown-content {
+    display: none;
+    position: absolute;
+    z-index: 100;
+    background: white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Animasi Huruf (GSAP) */
+.hover-float span {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+.hover-float:hover span {
+    transform: translateY(-5px);
+    color: #DD9E59;
+}
