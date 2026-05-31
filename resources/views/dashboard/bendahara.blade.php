@@ -20,7 +20,7 @@
 
 {{-- Statistik Card --}}
 <div class="row g-4 mb-5">
-    <div class="col-md-4">
+    <div class="col-lg-3 col-md-6">
         <div class="card p-4 h-100 section-card" style="border-left: 5px solid #3B82F6 !important; border-radius: 16px;">
             <div class="d-flex justify-content-between mb-3">
                 <h6 class="text-muted mb-0 small fw-bold text-uppercase tracking-wider">Saldo Kas</h6>
@@ -32,7 +32,7 @@
             <div class="text-muted small">Total dana tersedia</div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-lg-3 col-md-6">
         <div class="card p-4 h-100 section-card" style="border-left: 5px solid #10B981 !important; border-radius: 16px;">
             <div class="d-flex justify-content-between mb-3">
                 <h6 class="text-muted mb-0 small fw-bold text-uppercase tracking-wider">Pemasukan</h6>
@@ -44,7 +44,7 @@
             <div class="text-success small fw-bold">Akumulasi pemasukan</div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-lg-3 col-md-6">
         <div class="card p-4 h-100 section-card" style="border-left: 5px solid #EF4444 !important; border-radius: 16px;">
             <div class="d-flex justify-content-between mb-3">
                 <h6 class="text-muted mb-0 small fw-bold text-uppercase tracking-wider">Pengeluaran</h6>
@@ -54,6 +54,20 @@
             </div>
             <h3 class="fw-bold text-dark mb-1">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</h3>
             <div class="text-muted small">Total pengeluaran tercatat</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card p-4 h-100 section-card" style="border-left: 5px solid #F59E0B !important; border-radius: 16px;">
+            <div class="d-flex justify-content-between mb-3">
+                <h6 class="text-muted mb-0 small fw-bold text-uppercase tracking-wider">Total Tunggakan</h6>
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="background-color: #FEF3C7; width: 40px; height: 40px;">
+                    <i class="bi bi-exclamation-triangle" style="color: #D97706;"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Rp {{ number_format($totalNominalTunggakan, 0, ',', '.') }}</h3>
+            <div class="text-danger small fw-bold">
+                <i class="bi bi-people-fill me-1"></i>{{ count($tunggakanList) }} Siswa Menunggak
+            </div>
         </div>
     </div>
 </div>
@@ -167,6 +181,115 @@
     </div>
 </div>
 
+{{-- Section Data Tunggakan --}}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card section-card shadow-sm border-0" style="border-radius: 16px;">
+            <div class="card-header bg-white pt-4 px-4 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                        Data Tunggakan Iuran Siswa
+                        <span class="badge bg-danger rounded-pill" style="font-size: 0.75rem; padding: 0.35em 0.65em;">
+                            {{ count($tunggakanList) }} Siswa
+                        </span>
+                    </h6>
+                    <p class="text-muted small mb-0">Daftar otomatis siswa aktif dengan iuran bulanan/mingguan yang belum lunas pada bulan berjalan dan sebelumnya.</p>
+                </div>
+                <div class="position-relative" style="max-width: 300px;">
+                    <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="tunggakanSearchInput" class="form-control rounded-pill ps-5 border-gray-200" placeholder="Cari nama atau kelas...">
+                </div>
+            </div>
+            
+            <div class="card-body px-4 pb-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="tunggakanTable">
+                        <thead>
+                            <tr class="text-muted small text-uppercase">
+                                <th class="border-0 ps-3">Siswa</th>
+                                <th class="border-0">Program Kelas</th>
+                                <th class="border-0">Rincian Bulan</th>
+                                <th class="border-0">Total Tunggakan</th>
+                                <th class="border-0 text-end pe-3">Aksi Penagihan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($tunggakanList as $item)
+                            <tr class="border-bottom">
+                                <td class="ps-3 py-3">
+                                    <div class="fw-bold text-dark">{{ $item->nama_lengkap }}</div>
+                                    <div class="small text-muted">Username: {{ $item->username }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill shadow-xs">
+                                        {{ $item->program }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach($item->unpaid_months as $bulan)
+                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20 px-2 py-1 rounded-3 small">
+                                                {{ $bulan['bulan'] }} 
+                                                <span class="fw-normal">({{ $bulan['status'] }})</span>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-extrabold text-dark text-nowrap">Rp {{ number_format($item->total_arrears, 0, ',', '.') }}</span>
+                                </td>
+                                <td class="text-end pe-3">
+                                    @if($item->no_hp)
+                                        @php
+                                            $unpaidMonthsNames = collect($item->unpaid_months)->pluck('bulan')->implode(', ');
+                                            $message = "Halo *" . $item->nama_lengkap . "*,\n\nKami dari pengurus *Sanggar Seni Goong Prasasti* ingin menginfokan bahwa terdapat tunggakan iuran latihan untuk bulan: *" . $unpaidMonthsNames . "* dengan total sebesar *Rp " . number_format($item->total_arrears, 0, ',', '.') . "*.\n\nMohon untuk segera melakukan pembayaran iuran melalui dashboard siswa atau menyetorkannya langsung kepada pengurus.\n\nTerima kasih. 🙏";
+                                            
+                                            $phone = preg_replace('/[^0-9]/', '', $item->no_hp);
+                                            if (strpos($phone, '0') === 0) {
+                                                $phone = '62' . substr($phone, 1);
+                                            }
+                                            $waLink = "https://wa.me/" . $phone . "?text=" . rawurlencode($message);
+                                        @endphp
+                                        <a href="{{ $waLink }}" target="_blank" class="btn btn-sm rounded-pill px-3 btn-outline-success d-inline-flex align-items-center gap-2">
+                                            <i class="bi bi-whatsapp"></i> Tagih via WA
+                                        </a>
+                                    @else
+                                        <span class="text-muted small italic">No. HP tidak terdaftar</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted rounded-4 bg-light border-0">
+                                    <div class="mb-3"><i class="bi bi-check-circle-fill text-success fs-1"></i></div>
+                                    <h5 class="fw-bold mb-1">Semua Tagihan Lunas!</h5>
+                                    <p class="mb-0 small text-muted">Hebat! Tidak ada siswa yang menunggak iuran bulan ini.</p>
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .border-gray-200 { border-color: #E5E7EB !important; }
+    .btn-outline-success {
+        border-color: #10B981 !important;
+        color: #10B981 !important;
+    }
+    .btn-outline-success:hover {
+        background-color: #10B981 !important;
+        color: white !important;
+    }
+</style>
+
 {{-- Tabel Transaksi Terakhir --}}
 <div class="row">
     <div class="col-md-12">
@@ -278,6 +401,26 @@
                 x: { grid: { display: false } }
             }
         }
+    });
+
+    // Real-time search filter for Data Tunggakan
+    document.getElementById('tunggakanSearchInput').addEventListener('keyup', function() {
+        const query = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#tunggakanTable tbody tr');
+        
+        rows.forEach(row => {
+            // Skip the row if it's the "empty" message row (which has colspan="5")
+            if (row.querySelector('td[colspan]')) return;
+            
+            const name = row.cells[0].textContent.toLowerCase();
+            const program = row.cells[1].textContent.toLowerCase();
+            
+            if (name.includes(query) || program.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     });
 </script>
 @endpush

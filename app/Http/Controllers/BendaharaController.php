@@ -46,6 +46,53 @@ class BendaharaController extends Controller
             }
         }
 
+        // AUTO-SYNC: Pastikan tagihan iuran bulanan untuk semua siswa aktif disinkronkan ke database
+        $this->syncMonthlyBills();
+
+        // Ambil data tunggakan iuran
+        $siswaList = \App\Models\User::where('role', 'Siswa')
+            ->where('status', 'Aktif')
+            ->with(['pendaftaran.programKelas', 'pembayaran' => function($q) {
+                $q->whereNotIn(\Illuminate\Support\Facades\DB::raw('LOWER(status)'), ['lunas', 'success', 'settlement']);
+            }])
+            ->get();
+
+        $tunggakanList = [];
+        $totalNominalTunggakan = 0;
+        foreach ($siswaList as $siswa) {
+            $unpaidPayments = $siswa->pembayaran;
+            if ($unpaidPayments->isEmpty()) {
+                continue;
+            }
+
+            $unpaidMonths = [];
+            $totalSiswaTunggakan = 0;
+            foreach ($unpaidPayments as $payment) {
+                $unpaidMonths[] = [
+                    'bulan' => $payment->bulan,
+                    'jumlah' => $payment->jumlah,
+                    'status' => $payment->status
+                ];
+                $totalSiswaTunggakan += $payment->jumlah;
+            }
+
+            $tunggakanList[] = (object)[
+                'id_user'        => $siswa->id_user,
+                'username'       => $siswa->username,
+                'nama_lengkap'   => $siswa->pendaftaran->nama_calon ?? $siswa->username,
+                'no_hp'          => $siswa->pendaftaran->no_hp ?? null,
+                'program'        => $siswa->pendaftaran->programKelas->nama_program ?? 'Umum',
+                'unpaid_months'  => $unpaidMonths,
+                'total_arrears'  => $totalSiswaTunggakan,
+            ];
+
+            $totalNominalTunggakan += $totalSiswaTunggakan;
+        }
+
+        usort($tunggakanList, function($a, $b) {
+            return $b->total_arrears <=> $a->total_arrears;
+        });
+
         $chartData = [
             'labels' => [],
             'pemasukan' => [],
@@ -123,6 +170,8 @@ class BendaharaController extends Controller
             'iuranMingguanPending' => $iuranMingguanPending,
             'iuranBulananPending'  => $iuranBulananPending,
             'totalPending'         => $pembayaranPending->count() + TransaksiIuran::where('status', 'pending')->count(),
+            'tunggakanList'         => $tunggakanList,
+            'totalNominalTunggakan' => $totalNominalTunggakan,
         ]);
     }
 
@@ -382,6 +431,83 @@ class BendaharaController extends Controller
         } else {
             $iuran->update(['status' => 'ditolak']);
             return redirect()->back()->with('error', 'Iuran ditolak.');
+        }
+    }
+
+    private function syncMonthlyBills()
+    {
+        $siswaList = \App\Models\User::where('role', 'Siswa')->where('status', 'Aktif')->get();
+        $now = \Carbon\Carbon::now();
+        $currentMonthName = $now->translatedFormat('F Y');
+
+        foreach ($siswaList as $siswa) {
+            $pendaftaran = \App\Models\Pendaftaran::with('programKelas')->where('username', $siswa->username)->first();
+            if (!$pendaftaran || !$pendaftaran->tanggal_daftar) {
+                continue;
+            }
+
+            // 1. Pendaftaran Awal
+            $regExists = Pembayaran::where('id_user', $siswa->id_user)
+                ->where('bulan', 'Pendaftaran Awal')
+                ->first();
+            
+            $statusPendaftaran = strtolower($pendaftaran->status_pembayaran ?? '');
+            // Siswa yang berstatus Aktif pendaftaran awalnya pasti sudah lunas
+            $isPaid = in_array($statusPendaftaran, ['success', 'settlement', 'lunas']) || $siswa->status === 'Aktif';
+
+            if (!$regExists) {
+                $statusReg = $isPaid ? 'Lunas' : 'Belum Bayar';
+                Pembayaran::create([
+                    'id_user' => $siswa->id_user,
+                    'bulan'   => 'Pendaftaran Awal',
+                    'jumlah'  => $pendaftaran->programKelas ? $pendaftaran->programKelas->biaya : 0,
+                    'status'  => $statusReg,
+                    'tanggal_bayar' => ($statusReg === 'Lunas') ? $pendaftaran->tanggal_daftar : null,
+                    'tipe_iuran' => 'pendaftaran',
+                    'metode_pembayaran' => $pendaftaran->metode_pembayaran ?? 'N/A'
+                ]);
+            } else {
+                if (strtolower($regExists->status) === 'belum bayar' && $isPaid) {
+                    $regExists->update([
+                        'status' => 'Lunas',
+                        'tanggal_bayar' => $pendaftaran->tanggal_daftar ?? now(),
+                        'metode_pembayaran' => $pendaftaran->metode_pembayaran ?? $regExists->metode_pembayaran
+                    ]);
+                }
+            }
+
+            // 2. Iuran Bulanan
+            $startDate = \Carbon\Carbon::parse($pendaftaran->tanggal_daftar);
+            $current = $startDate->copy()->startOfMonth();
+            while ($current->lte($now->copy()->startOfMonth())) {
+                $monthName = $current->translatedFormat('F Y');
+
+                $pembayaran = Pembayaran::where('id_user', $siswa->id_user)
+                    ->where('bulan', $monthName)
+                    ->first();
+
+                if (!$pembayaran) {
+                    Pembayaran::create([
+                        'id_user' => $siswa->id_user,
+                        'bulan'   => $monthName,
+                        'jumlah'  => 100000,
+                        'status'  => 'Belum Bayar',
+                        'tipe_iuran' => 'bulanan'
+                    ]);
+                } else {
+                    if ($monthName === $currentMonthName && $pembayaran->status === 'Lunas' && empty($pembayaran->metode_pembayaran)) {
+                        $pembayaran->update([
+                            'status' => 'Belum Bayar',
+                            'tanggal_bayar' => null
+                        ]);
+                    }
+
+                    if (strtolower($pembayaran->status) == 'belum bayar' && $pembayaran->jumlah != 100000) {
+                        $pembayaran->update(['jumlah' => 100000]);
+                    }
+                }
+                $current->addMonth();
+            }
         }
     }
 }

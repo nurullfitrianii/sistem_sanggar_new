@@ -266,6 +266,11 @@
                     </select>
                 </div>
 
+                <div class="mb-3" id="bukti_bayar_container">
+                    <label class="form-label small fw-bold">Unggah Bukti Pembayaran (Maks. 2MB)</label>
+                    <input type="file" id="bukti_bayar" name="bukti_bayar" class="form-control rounded-3" accept="image/*,application/pdf">
+                </div>
+
                 <div class="alert alert-secondary py-2 border-0">
                 <small>Total Bayar: <strong>Rp <span id="display_nominal">0</span></strong></small>
                 <input type="hidden" id="input_nominal_bayar">
@@ -311,10 +316,20 @@ document.addEventListener('DOMContentLoaded', function() {
         selectTipe.addEventListener('change', updateHarga);
     }
 
+    const selectMetode = document.getElementById('metode_pembayaran');
+    const buktiBayarContainer = document.getElementById('bukti_bayar_container');
+    const fileInput = document.getElementById('bukti_bayar');
+
     document.querySelectorAll('.btn-buka-modal').forEach(button => {
         button.onclick = function() {
             document.getElementById('pembayaran_id').value = this.getAttribute('data-id');
             document.getElementById('txtBulan').innerText = this.getAttribute('data-bulan');
+            if (selectMetode) {
+                selectMetode.value = 'transfer';
+            }
+            if (fileInput) {
+                fileInput.value = '';
+            }
             updateHarga();
             modalBayar.show();
         };
@@ -323,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnProses.onclick = function() {
         const id = document.getElementById('pembayaran_id').value;
         const tipe = selectTipe.value;
-        const metode = document.getElementById('metode_pembayaran').value;
+        const metode = selectMetode.value;
         const nominal = inputNominal.value;
 
         if (nominal == 0 || nominal == "") {
@@ -331,21 +346,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (metode === 'tunai' && (!fileInput.files || fileInput.files.length === 0)) {
+            alert("Harap unggah bukti pembayaran!");
+            return;
+        }
+
+        if (fileInput.files && fileInput.files[0] && fileInput.files[0].size > 2 * 1024 * 1024) {
+            alert("Ukuran bukti pembayaran maksimal 2MB!");
+            return;
+        }
+
         btnProses.disabled = true;
         btnProses.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memproses...';
+
+        const formData = new FormData();
+        formData.append('tipe_iuran', tipe);
+        formData.append('metode_pembayaran', metode);
+        formData.append('jumlah_bayar', nominal);
+        if (fileInput.files && fileInput.files[0]) {
+            formData.append('bukti_bayar', fileInput.files[0]);
+        }
 
         fetch(`/iuran/bayar/${id}`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                tipe_iuran: tipe,
-                metode_pembayaran: metode,
-                jumlah_bayar: nominal
-            })
+            body: formData
         })
         .then(response => response.json())
         .then(data => {

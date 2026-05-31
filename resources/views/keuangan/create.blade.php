@@ -1,4 +1,4 @@
-r@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Catat Transaksi Keuangan')
 
@@ -6,7 +6,9 @@ r@extends('layouts.admin')
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="d-flex align-items-center gap-3 mb-4">
-            <a href="{{ route(($routePrefix ?? 'keuangan') . '.index') }}" class="btn rounded-circle p-2 shadow-sm btn-outline-primary" style="width: 40px; height: 40px">Aksi</a>
+            <a href="{{ route(($routePrefix ?? 'keuangan') . '.index') }}" class="btn rounded-pill px-3 py-2 shadow-sm btn-outline-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i> Kembali
+            </a>
             <h1 class="h3 mb-0 fw-bold">Catat Transaksi Baru</h1>
         </div>
 

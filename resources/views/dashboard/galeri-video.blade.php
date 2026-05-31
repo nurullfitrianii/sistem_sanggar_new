@@ -7,12 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
-<body class="bg-[#1A1A1A] text-white antialiased"> <section class="py-16 px-6">
+<body class="bg-[#FAFAFA] antialiased">
+
+    <section class="py-16 px-6">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6" data-aos="fade-down">
                 <div>
-                    <h1 class="text-4xl font-bold">Koleksi Video</h1>
-                    <p class="text-gray-400 mt-2">Cuplikan pementasan dan latihan karawitan & tari.</p>
+                    <h1 class="text-4xl font-bold text-gray-900">Koleksi Video</h1>
+                    <p class="text-gray-500 mt-2">Cuplikan pementasan dan latihan karawitan & tari.</p>
                 </div>
                 <div class="flex items-center gap-4">
                     <a href="https://www.youtube.com/@ujangkodim" target="_blank" class="bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-all flex items-center gap-2">
@@ -25,7 +27,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               @php
             $videos = [
             ['id' => 'LYplKed1MEQ', 'judul' => 'Seni Tari Jaipong - Sanggar Goong Prasasti'],
@@ -36,7 +38,7 @@
     @endphp
 
                 @foreach($videos as $video)
-                <div class="bg-[#262626] rounded-2xl overflow-hidden border border-gray-800 shadow-xl group" data-aos="fade-up">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 group" data-aos="fade-up">
                     <div class="relative w-full aspect-video">
                         <iframe 
                             class="absolute top-0 left-0 w-full h-full"
@@ -49,7 +51,7 @@
                         </iframe>
                     </div>
                     <div class="p-5">
-                        <h3 class="font-bold text-lg text-white">{{ $video['judul'] }}</h3>
+                        <h3 class="font-bold text-lg text-gray-900 group-hover:text-[#994D1C] transition-colors duration-300">{{ $video['judul'] }}</h3>
                     </div>
                 </div>
                 @endforeach

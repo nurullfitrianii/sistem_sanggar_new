@@ -63,7 +63,7 @@
 
                 {{-- STEP 1: INFO PRIBADI --}}
                 @elseif($step == 1)
-                    <form action="{{ route('pendaftaran.postStep1') }}" method="POST">
+                    <form action="{{ route('pendaftaran.postStep1') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="space-y-6">
                             <div>
@@ -89,6 +89,30 @@
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Alamat Lengkap</label>
                                 <textarea name="alamat" rows="3" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="Alamat domisili saat ini...">{{ session('registration_data.alamat') }}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Berkas Pendukung (Akta Kelahiran/KIA) (Maks. 2MB)</label>
+                                <div class="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-6 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group">
+                                    <input type="file" name="dokumen" accept="image/*,application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileSelected(this)">
+                                    <div class="text-center" id="file-upload-placeholder">
+                                        <i class="bi bi-cloud-arrow-up text-4xl text-gray-400 group-hover:text-primary transition-colors"></i>
+                                        <p class="mt-2 text-sm font-bold text-gray-700">Pilih berkas untuk diunggah</p>
+                                        <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG, PDF (Maks. 2MB)</p>
+                                    </div>
+                                    <div class="hidden text-center" id="file-upload-info">
+                                        <i class="bi bi-file-earmark-check text-4xl text-emerald-500"></i>
+                                        <p class="mt-2 text-sm font-bold text-gray-800" id="selected-file-name">Nama berkas...</p>
+                                        <p class="text-xs text-emerald-600 mt-1 flex items-center justify-center gap-1">
+                                            <i class="bi bi-check-circle-fill"></i> Berkas siap diunggah
+                                        </p>
+                                    </div>
+                                </div>
+                                @if(session('registration_data.dokumen'))
+                                    <p class="text-xs text-primary mt-2 flex items-center gap-1">
+                                        <i class="bi bi-file-earmark-text"></i> Berkas tersimpan sebelumnya: 
+                                        <span class="font-semibold">{{ basename(session('registration_data.dokumen')) }}</span>
+                                    </p>
+                                @endif
                             </div>
                         </div>
                         <div class="mt-10">
@@ -227,17 +251,17 @@
                                         btn.disabled = false;
                                     },
                                     onClose: function() {
-                                    Swal.fire({
-                                        icon: 'warning',
-                                        title: 'Pembayaran Dibatalkan',
-                                        text: 'Kamu menutup halaman pembayaran. Silakan pilih metode dan coba lagi.',
-                                        confirmButtonText: 'Kembali ke Form',
-                                        confirmButtonColor: '#994D1C',
-                                        allowOutsideClick: false,
-                                    });
-                                    btn.innerHTML = "Selesaikan & Daftar";
-                                    btn.disabled = false;
-                                }
+                                        Swal.fire({
+                                            icon: 'warning',
+                                            title: 'Pembayaran Dibatalkan',
+                                            text: 'Kamu menutup halaman pembayaran. Silakan pilih metode dan coba lagi.',
+                                            confirmButtonText: 'Kembali ke Form',
+                                            confirmButtonColor: '#994D1C',
+                                            allowOutsideClick: false,
+                                        });
+                                        btn.innerHTML = "Selesaikan & Daftar";
+                                        btn.disabled = false;
+                                    }
                                 });
                             }
                         });
@@ -327,6 +351,36 @@
         }).then(() => {
             window.location.href = "/";
         });
+    }
+
+    function handleFileSelected(input) {
+        const placeholder = document.getElementById('file-upload-placeholder');
+        const info = document.getElementById('file-upload-info');
+        const nameSpan = document.getElementById('selected-file-name');
+        
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Ukuran Berkas Terlalu Besar',
+                    text: 'Maksimal ukuran berkas adalah 2MB.',
+                    confirmButtonColor: '#994D1C'
+                });
+                input.value = '';
+                placeholder.classList.remove('hidden');
+                info.classList.add('hidden');
+                return;
+            }
+            
+            nameSpan.textContent = file.name;
+            placeholder.classList.add('hidden');
+            info.classList.remove('hidden');
+        } else {
+            placeholder.classList.remove('hidden');
+            info.classList.add('hidden');
+        }
     }
     </script>
 </body>

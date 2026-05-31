@@ -50,58 +50,43 @@
                                 </td>
                                 <td><span class="badge bg-light text-dark border">{{ ucfirst($item->metode) }}</span></td>
                                 <td class="text-center">
-                                    @if($item->metode == 'transfer' && $item->bukti_bayar)
-                                        <button type="button" class="btn btn-sm rounded-pill px-3 btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalBukti{{ $item->type }}{{ $item->id_item }}">
-                                            Lihat
-                                        </button>
-                                        
-                                        <!-- Modal Bukti -->
-                                        <div class="modal fade" id="modalBukti{{ $item->type }}{{ $item->id_item }}" tabindex="-1" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content border-0 shadow-lg rounded-4 text-start">
-                                                    <div class="modal-header border-0 pb-0 pt-4 px-4">
-                                                        <h5 class="fw-bold">Bukti {{ $item->kategori }}</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">Aksi</button>
-                                                    </div>
-                                                    <div class="modal-body p-4 text-center">
-                                                        <img src="{{ asset('storage/' . $item->bukti_bayar) }}" alt="Bukti Pembayaran" class="img-fluid rounded-3" style="max-height: 400px; object-fit: contain;">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <span class="text-muted small">-</span>
-                                    @endif
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end gap-2">
-                                        @if($item->type == 'pendaftaran' || $item->type == 'pendaftaran_awal')
-                                            <!-- Action untuk Pendaftaran -->
-                                            <form action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'terima']) }}" method="POST" class="m-0">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="return confirm('Validasi Pendaftaran ini?');"> Valid </button>
-                                            </form>
-                                            
-                                            <form action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'tolak']) }}" method="POST" class="m-0">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="return confirm('Tolak Pendaftaran ini?');"> Tolak </button>
-                                            </form>
-                                        @else
-                                            <!-- Action untuk Iuran -->
-                                            <form action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
-                                                @csrf
-                                                <input type="hidden" name="status" value="valid">
-                                                <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="return confirm('Validasi {{ $item->kategori }} ini?');"> Valid </button>
-                                            </form>
-                                            
-                                            <form action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
-                                                @csrf
-                                                <input type="hidden" name="status" value="ditolak">
-                                                <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="return confirm('Tolak {{ $item->kategori }} ini?');"> Tolak </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </td>
+                                     @if($item->bukti_bayar)
+                                         <a href="{{ asset('storage/' . $item->bukti_bayar) }}" target="_blank" class="btn btn-sm rounded-pill px-3 btn-outline-primary">
+                                             Lihat
+                                         </a>
+                                     @else
+                                         <span class="text-muted small">-</span>
+                                     @endif
+                                 </td>
+                                 <td class="text-end">
+                                     <div class="d-flex justify-content-end gap-2">
+                                         @if($item->type == 'pendaftaran' || $item->type == 'pendaftaran_awal' || $item->type == 'pembayaran')
+                                             <!-- Action untuk Pendaftaran / Pembayaran -->
+                                             <form action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'terima']) }}" method="POST" class="m-0">
+                                                 @csrf
+                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="return confirm('Validasi pembayaran ini?');"> Valid </button>
+                                             </form>
+                                             
+                                             <form action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'tolak']) }}" method="POST" class="m-0">
+                                                 @csrf
+                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="return confirm('Tolak pembayaran ini?');"> Tolak </button>
+                                             </form>
+                                         @else
+                                             <!-- Action untuk Iuran Mingguan / Lainnya -->
+                                             <form action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
+                                                 @csrf
+                                                 <input type="hidden" name="status" value="valid">
+                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="return confirm('Validasi {{ $item->kategori }} ini?');"> Valid </button>
+                                             </form>
+                                             
+                                             <form action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
+                                                 @csrf
+                                                 <input type="hidden" name="status" value="ditolak">
+                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="return confirm('Tolak {{ $item->kategori }} ini?');"> Tolak </button>
+                                             </form>
+                                         @endif
+                                     </div>
+                                 </td>
                             </tr>
                             @empty
                             <tr>

@@ -24,7 +24,7 @@
                             $waktuHadir = \Carbon\Carbon::parse($absen->waktu_hadir);
                             $jamMulai = $absen->jadwalLatihan ? \Carbon\Carbon::parse($absen->jadwalLatihan->jam_mulai) : null;
                             $isLate = false;
-                            
+
                             if ($jamMulai && strtolower($absen->status) == 'hadir') {
                                 if ($waktuHadir->format('H:i:s') > $jamMulai->format('H:i:s')) {
                                     $isLate = true;

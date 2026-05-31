@@ -53,7 +53,17 @@ class PendaftaranController extends Controller
             'alamat'        => 'required|string',
             'email'         => 'required|email|max:255',
             'tanggal_lahir' => 'required|date',
+            'dokumen'       => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
+
+        if ($request->hasFile('dokumen')) {
+            $data['dokumen'] = $request->file('dokumen')->store('pendaftaran', 'public');
+        } elseif (Session::has('registration_data.dokumen')) {
+            $data['dokumen'] = Session::get('registration_data.dokumen');
+        } else {
+            $data['dokumen'] = null;
+        }
+
         Session::put('registration_data', $data);
         return redirect()->route('pendaftaran.step2');
     }
@@ -113,6 +123,7 @@ class PendaftaranController extends Controller
                 'tanggal_daftar'    => now()->toDateString(),
                 'no_hp'             => $sessionData['no_hp'],
                 'alamat'            => $sessionData['alamat'],
+                'dokumen'           => $sessionData['dokumen'] ?? null,
                 'metode_pembayaran' => $metode,
                 'status'            => 'Menunggu',
                 'status_pembayaran' => ($metode == 'transfer') ? 'pending' : 'belum lunas'

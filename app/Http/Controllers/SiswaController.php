@@ -26,7 +26,8 @@ class SiswaController extends Controller
             ->first();
         
         $statusPendaftaran = strtolower($pendaftaran->status_pembayaran ?? '');
-        $isPaid = in_array($statusPendaftaran, ['success', 'settlement', 'lunas']);
+        // Siswa yang berstatus Aktif pendaftaran awalnya pasti sudah lunas
+        $isPaid = in_array($statusPendaftaran, ['success', 'settlement', 'lunas']) || $user->status === 'Aktif';
 
         if (!$regExists) {
             $statusReg = $isPaid ? 'Lunas' : 'Belum Bayar';
@@ -133,6 +134,14 @@ class SiswaController extends Controller
         $pembayaran = Pembayaran::findOrFail($id);
         $user = auth()->user();
 
+        $buktiBayarPath = $pembayaran->bukti_bayar;
+        if ($request->hasFile('bukti_bayar')) {
+            $request->validate([
+                'bukti_bayar' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            ]);
+            $buktiBayarPath = $request->file('bukti_bayar')->store('bukti_bayar', 'public');
+        }
+
         // Jika Tunai → tunggu verifikasi bendahara
         if ($request->metode_pembayaran === 'tunai') {
             $pembayaran->update([
@@ -140,6 +149,7 @@ class SiswaController extends Controller
                 'metode_pembayaran' => $request->metode_pembayaran,
                 'jumlah'            => $request->jumlah_bayar,
                 'status'            => 'Menunggu Verifikasi',
+                'bukti_bayar'       => $buktiBayarPath,
             ]);
 
             return response()->json([
@@ -155,6 +165,7 @@ class SiswaController extends Controller
             'metode_pembayaran' => $request->metode_pembayaran,
             'jumlah'            => $request->jumlah_bayar,
             'status'            => 'Menunggu Verifikasi',
+            'bukti_bayar'       => $buktiBayarPath,
         ]);
 
         \Midtrans\Config::$serverKey = config('midtrans.server_key');
