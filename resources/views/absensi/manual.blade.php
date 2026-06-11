@@ -32,7 +32,10 @@
                     <select name="id_jadwal" class="form-select @error('id_jadwal') is-invalid @enderror" required>
                         <option value="">-- Pilih Jadwal --</option>
                         @foreach($jadwal as $j)
-                            <option value="{{ $j->id_jadwal }}">{{ $j->hari }}, {{ $j->jam_mulai }} - {{ $j->programKelas->nama_program }}</option>
+                            <option value="{{ $j->id_jadwal }}">
+                                {{ $j->programKelas->nama_program ?? '-' }} &mdash; {{ $j->hari }}, 
+                                {{ \Carbon\Carbon::parse($j->jam_mulai)->format('H:i') }}–{{ \Carbon\Carbon::parse($j->jam_selesai)->format('H:i') }}
+                            </option>
                         @endforeach
                     </select>
                     @error('id_jadwal') <div class="invalid-feedback">{{ $message }}</div> @enderror
@@ -88,10 +91,13 @@
                     </thead>
                     <tbody>
                         @forelse($semuaAbsensi as $absen)
+                        @php
+                            $jadwal = $absen->getJadwal();
+                        @endphp
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($absen->waktu_hadir)->format('d M Y, H:i') }}</td>
                             <td class="">{{ $absen->user->nama_lengkap ?? $absen->user->username ?? '-' }}</td>
-                            <td>{{ $absen->jadwalLatihan->programKelas->nama_program ?? '-' }}</td>
+                            <td>{{ $jadwal->programKelas->nama_program ?? $absen->user->pendaftaran->programKelas->nama_program ?? '-' }}</td>
                             <td>
                                 @if(strtolower($absen->status) == 'hadir')
                                     <span class="badge bg-success">Hadir</span>
@@ -117,7 +123,7 @@
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title">Edit Absensi: {{ $absen->user->username ?? '-' }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal">Aksi</button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form action="{{ route('absensi.updateManual', $absen->id_absensi) }}" method="POST">
                                         @csrf

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Pendaftaran;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Log;
+use App\Mail\PembayaranBerhasil;
+use Illuminate\Support\Facades\Mail;
 
 class MidtransController extends Controller
 {
@@ -43,6 +45,20 @@ class MidtransController extends Controller
                             'keterangan' => $keterangan,
                             'id_user'    => $pendaftaran->id_user,
                         ]);
+                    }
+
+                    // Kirim email notifikasi pembayaran berhasil
+                    if ($pendaftaran->email) {
+                        try {
+                            Mail::to($pendaftaran->email)->send(new PembayaranBerhasil(
+                                namaCalon  : $pendaftaran->nama_calon,
+                                namaProgram: $pendaftaran->programKelas->nama_program ?? 'Sanggar',
+                                jumlah     : 'Rp ' . number_format($request->gross_amount, 0, ',', '.'),
+                                tanggal    : now()->format('d M Y')
+                            ));
+                        } catch (\Exception $e) {
+                            Log::error('Gagal kirim email pembayaran Midtrans: ' . $e->getMessage());
+                        }
                     }
 
                 } elseif ($request->transaction_status == 'pending') {

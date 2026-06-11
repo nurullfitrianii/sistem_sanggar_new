@@ -14,7 +14,7 @@ class Pendaftaran extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_user', 'id_program', 'email', 'username', 'nama_calon', 'tanggal_lahir', 'tanggal_daftar', 'no_hp', 'alamat', 'status', 'dokumen', 'metode_pembayaran', 'status_pembayaran'
+        'id_user', 'id_program', 'email', 'username', 'nama_calon', 'tanggal_lahir', 'tanggal_daftar', 'no_hp', 'alamat', 'status', 'dokumen', 'metode_pembayaran', 'status_pembayaran', 'bukti_bayar'
     ];
 
     public function programKelas()

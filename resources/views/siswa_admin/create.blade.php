@@ -14,6 +14,12 @@
         @error('username')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="mb-3">
+        <label class="form-label">Email (Opsional)</label>
+        <input type="email" name="email" value="{{ old('email') }}"
+               class="form-control @error('email') is-invalid @enderror">
+        @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+    </div>
+    <div class="mb-3">
         <label class="form-label">Kata Sandi</label>
         <input type="password" autocomplete="new-password" name="password"
                class="form-control @error('password') is-invalid @enderror" required>

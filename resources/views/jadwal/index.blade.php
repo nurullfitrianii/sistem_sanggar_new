@@ -36,7 +36,7 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
-    <h1 class="h4 mb-0 fw-bold text-dark">Jadwal Kelas (Master List)</h1>
+    <h1 class="h4 mb-0 fw-bold text-dark">Jadwal Kelas</h1>
     <a href="{{ route('jadwal.create') }}" class="btn px-4 py-2 btn-outline-success" style="border-radius: 8px">Tambah Jadwal</a>
 </div>
 

@@ -29,11 +29,12 @@
                         <td>{{ $galeri->tanggal }}</td>
                         <td class="text-end">
                             <a href="{{ route('galeri-admin.edit', $galeri) }}" class="btn btn-sm btn-outline-warning">Edit</a>
-                            <form action="{{ route('galeri-admin.destroy', $galeri) }}" method="POST" class="d-inline"
-                                  onsubmit="return confirm('Hapus item galeri ini?');">
+                             <form action="{{ route('galeri-admin.destroy', $galeri) }}" method="POST" class="d-inline form-delete">
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger">Hapus</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-delete" data-message="Apakah anda yakin ingin menghapus foto '{{ $galeri->judul }}'?">
+                                    Hapus
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -49,5 +50,35 @@
         </div>
     </div>
 </div>
-@endsection
 
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButtons = document.querySelectorAll('.btn-delete');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                const message = this.getAttribute('data-message') || 'Apakah Anda yakin ingin menghapus data ini?';
+                
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
+</script>
+@endpush
+@endsection

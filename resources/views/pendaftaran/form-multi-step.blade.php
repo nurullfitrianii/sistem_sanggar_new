@@ -166,10 +166,12 @@
                             <label class="relative flex cursor-pointer rounded-2xl border-2 p-4 hover:bg-blue-50 transition-all border-gray-100 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
                                 <input type="radio" name="metode_pembayaran" value="transfer" class="sr-only" checked>
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"></div>
+                                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                                        <i class="bi bi-qr-code-scan text-xl"></i>
+                                    </div>
                                     <div>
-                                        <p class="font-bold text-sm text-gray-900">Transfer / QRIS (Otomatis)</p>
-                                        <p class="text-[10px] text-gray-500">Konfirmasi instan via Midtrans.</p>
+                                        <p class="font-bold text-sm text-gray-900">Transfer / QRIS</p>
+                                        <p class="text-[10px] text-gray-500">Scan QRIS untuk melakukan pembayaran instan.</p>
                                     </div>
                                 </div>
                             </label>
@@ -177,13 +179,44 @@
                             <label class="relative flex cursor-pointer rounded-2xl border-2 p-4 hover:bg-orange-50 transition-all border-gray-100 has-[:checked]:border-[#994D1C] has-[:checked]:bg-orange-50">
                                 <input type="radio" name="metode_pembayaran" value="tunai" class="sr-only">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 bg-orange-100 text-[#994D1C] rounded-xl flex items-center justify-center"></div>
+                                    <div class="w-10 h-10 bg-orange-100 text-[#994D1C] rounded-xl flex items-center justify-center">
+                                        <i class="bi bi-cash-coin text-xl"></i>
+                                    </div>
                                     <div>
                                         <p class="font-bold text-sm text-gray-900">Bayar Tunai</p>
                                         <p class="text-[10px] text-gray-500">Bayar langsung di Sanggar.</p>
                                     </div>
                                 </div>
                             </label>
+                        </div>
+
+                        <!-- QRIS Detail & Proof Upload Container -->
+                        <div id="qris-payment-container" class="mt-6 p-6 bg-orange-50/50 rounded-2xl border border-orange-100 text-left">
+                            <div class="text-center mb-4">
+                                <p class="text-xs text-orange-600 font-bold uppercase mb-2">Scan QRIS di Bawah Ini</p>
+                                <img src="{{ asset('img/qris2.jpeg') }}" alt="QRIS Sanggar" class="w-48 mx-auto rounded-xl shadow-md border border-gray-200">
+                                <p class="text-xs text-gray-500 mt-2">Pendaftaran: <strong class="text-gray-900">{{ $program->nama_program }}</strong></p>
+                                <p class="text-sm font-extrabold text-[#994D1C] mt-1">Total: Rp {{ number_format($program->biaya, 0, ',', '.') }}</p>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-700">Unggah Bukti Pembayaran (Maks. 2MB)</label>
+                                <div class="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer group">
+                                    <input type="file" id="bukti_bayar_reg" name="bukti_bayar" accept="image/*,application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleProofFileSelected(this)">
+                                    <div class="text-center" id="proof-upload-placeholder">
+                                        <i class="bi bi-cloud-arrow-up text-3xl text-gray-400 group-hover:text-primary transition-colors"></i>
+                                        <p class="mt-1 text-xs font-bold text-gray-700">Pilih bukti pembayaran</p>
+                                        <p class="text-[10px] text-gray-400">JPG, PNG, PDF (Maks. 2MB)</p>
+                                    </div>
+                                    <div class="hidden text-center" id="proof-upload-info">
+                                        <i class="bi bi-file-earmark-check text-3xl text-emerald-500"></i>
+                                        <p class="mt-1 text-xs font-bold text-gray-800" id="proof-selected-file-name">Nama berkas...</p>
+                                        <p class="text-[10px] text-emerald-600 flex items-center justify-center gap-1">
+                                            <i class="bi bi-check-circle-fill"></i> Bukti siap diunggah
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-10 flex gap-4">
@@ -202,79 +235,135 @@
         </div>
     </div>
 
-    {{-- Script Midtrans & SweetAlert2 --}}
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+    {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const radios = document.querySelectorAll('input[name="metode_pembayaran"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const qrisContainer = document.getElementById('qris-payment-container');
+                if (qrisContainer) {
+                    if (this.value === 'transfer') {
+                        qrisContainer.style.display = 'block';
+                    } else {
+                        qrisContainer.style.display = 'none';
+                    }
+                }
+            });
+        });
+        
+        // Trigger initial state
+        const checkedRadio = document.querySelector('input[name="metode_pembayaran"]:checked');
+        if (checkedRadio) {
+            checkedRadio.dispatchEvent(new Event('change'));
+        }
+    });
+
+    function handleProofFileSelected(input) {
+        const placeholder = document.getElementById('proof-upload-placeholder');
+        const info = document.getElementById('proof-upload-info');
+        const nameSpan = document.getElementById('proof-selected-file-name');
+        
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Ukuran Berkas Terlalu Besar',
+                    text: 'Maksimal ukuran berkas adalah 2MB.',
+                    confirmButtonColor: '#994D1C'
+                });
+                input.value = '';
+                placeholder.classList.remove('hidden');
+                info.classList.add('hidden');
+                return;
+            }
+            
+            nameSpan.textContent = file.name;
+            placeholder.classList.add('hidden');
+            info.classList.remove('hidden');
+        } else {
+            placeholder.classList.remove('hidden');
+            info.classList.add('hidden');
+        }
+    }
+
     function handleFinalSubmit() {
         const btn = document.getElementById('btn-submit');
         const radioMetode = document.querySelector('input[name="metode_pembayaran"]:checked');
 
         if (!radioMetode) {
-            alert("Pilih metode pembayaran dulu ya!");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pilih Metode Pembayaran',
+                text: 'Pilih metode pembayaran terlebih dahulu!',
+                confirmButtonColor: '#994D1C'
+            });
             return;
         }
 
         const metode = radioMetode.value;
+        const fileInput = document.getElementById('bukti_bayar_reg');
+
+        if (metode === 'transfer') {
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Bukti Pembayaran Diperlukan',
+                    text: 'Silakan unggah bukti pembayaran QRIS Anda terlebih dahulu!',
+                    confirmButtonColor: '#994D1C'
+                });
+                return;
+            }
+        }
+
         btn.innerHTML = "Memproses...";
         btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('metode_pembayaran', metode);
+        if (metode === 'transfer' && fileInput && fileInput.files[0]) {
+            formData.append('bukti_bayar', fileInput.files[0]);
+        }
 
         fetch("{{ route('pendaftaran.store') }}", {
             method: "POST",
             headers: {
                 "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                "Content-Type": "application/json",
                 "Accept": "application/json"
             },
-            body: JSON.stringify({ metode_pembayaran: metode })
+            body: formData
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(err => { throw err; });
+            }
+            return res.json();
+        })
         .then(data => {
             if (data.success) {
-                if (metode === 'tunai') {
-                    tampilkanModalSukses(data.nama_calon, data.username, 'tunai');
-                } else {
-                    fetch("/payment/token/" + data.id_pendaftaran)
-                        .then(res => res.json())
-                        .then(tokenData => {
-                            if (tokenData.token) {
-                                window.snap.pay(tokenData.token, {
-                                    onSuccess: function(result) {
-                                        tampilkanModalSukses(data.nama_calon, data.username, 'transfer');
-                                    },
-                                    onPending: function(result) {
-                                        tampilkanModalSukses(data.nama_calon, data.username, 'pending');
-                                    },
-                                    onError: function(result) {
-                                        alert("Pembayaran Gagal! Silakan coba lagi.");
-                                        btn.innerHTML = "Selesaikan & Daftar";
-                                        btn.disabled = false;
-                                    },
-                                    onClose: function() {
-                                        Swal.fire({
-                                            icon: 'warning',
-                                            title: 'Pembayaran Dibatalkan',
-                                            text: 'Kamu menutup halaman pembayaran. Silakan pilih metode dan coba lagi.',
-                                            confirmButtonText: 'Kembali ke Form',
-                                            confirmButtonColor: '#994D1C',
-                                            allowOutsideClick: false,
-                                        });
-                                        btn.innerHTML = "Selesaikan & Daftar";
-                                        btn.disabled = false;
-                                    }
-                                });
-                            }
-                        });
-                }
+                tampilkanModalSukses(data.nama_calon, data.username, metode);
             } else {
-                alert("Gagal: " + (data.message || "Terjadi kesalahan"));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: data.message || "Terjadi kesalahan",
+                    confirmButtonColor: '#994D1C'
+                });
                 btn.innerHTML = "Selesaikan & Daftar";
                 btn.disabled = false;
             }
         })
         .catch(err => {
             console.error(err);
-            alert("Server error, silakan coba lagi.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.message || "Server error, silakan coba lagi.",
+                confirmButtonColor: '#994D1C'
+            });
             btn.innerHTML = "Selesaikan & Daftar";
             btn.disabled = false;
         });
@@ -296,9 +385,7 @@
 
     function tampilkanModalSukses(nama, username, metode) {
         const pesanMetode = metode === 'transfer'
-            ? `<div class="status-badge success"><span>✅</span> <div>Pembayaran berhasil diterima. Menunggu verifikasi tim Humas.</div></div>`
-            : metode === 'pending'
-            ? `<div class="status-badge warning"><span>⏳</span> <div>Pembayaran pending. Tim Humas akan memverifikasi setelah pembayaran dikonfirmasi.</div></div>`
+            ? `<div class="status-badge success"><span>✅</span> <div>Bukti pembayaran QRIS telah diunggah. Menunggu verifikasi tim Humas & Bendahara.</div></div>`
             : `<div class="status-badge info"><span>💵</span> <div>Silakan bayar tunai langsung ke sanggar. Tim Humas akan segera memverifikasi.</div></div>`;
 
         Swal.fire({

@@ -9,7 +9,7 @@
 
         <div class="mb-20" data-aos="fade-up">
             <div class="flex flex-row overflow-hidden rounded-2xl shadow-2xl mb-8 group">
-                <img src="{{ asset('img/DSCF3336.jpg') }}"
+                <img src="{{ asset('img/DSCF3336.JPG') }}"
                     class="w-1/4 h-80 object-cover hover:scale-110 transition-transform duration-700 cursor-pointer">
 
                 <img src="{{ asset('img/tari2.jpg') }}"
@@ -18,7 +18,7 @@
                 <img src="{{ asset('img/tari3.jpg') }}"
                     class="w-1/4 h-80 object-cover hover:scale-110 transition-transform duration-700 cursor-pointer border-l border-white">
 
-                <img src="{{ asset('img/IMG_5362.jpg') }}"
+                <img src="{{ asset('img/IMG_5336.JPG') }}"
                     class="w-1/4 h-80 object-cover hover:scale-110 transition-transform duration-700 cursor-pointer border-l border-white">
             </div>
             <div class="text-center">

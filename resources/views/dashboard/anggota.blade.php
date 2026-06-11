@@ -243,7 +243,7 @@
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pb-0 pt-4 px-4">
                 <h5 class="fw-bold">Form Pembayaran Iuran</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal">Aksi</button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body px-4">
                 <p class="text-muted small">Pembayaran untuk bulan: <strong id="txtBulan"></strong></p>
@@ -261,9 +261,16 @@
                 <div class="mb-3">
                     <label class="form-label small fw-bold">Metode Pembayaran</label>
                     <select id="metode_pembayaran" class="form-select rounded-3">
-                        <option value="transfer">Transfer (Otomatis Midtrans)</option>
+                        <option value="transfer">Transfer (QRIS)</option>
                         <option value="tunai">Tunai (Bayar ke Sanggar)</option>
                     </select>
+                </div>
+
+                <!-- QRIS Image Container -->
+                <div class="mb-3 text-center p-3 bg-light rounded-3 border" id="qris_image_container" style="display: none;">
+                    <p class="text-xs text-uppercase fw-bold text-success mb-2">Scan QRIS Di Bawah Ini</p>
+                    <img src="{{ asset('img/qris2.jpeg') }}" alt="QRIS Sanggar" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-width: 180px;">
+                    <p class="text-muted mb-0" style="font-size: 0.75rem;">Silakan scan QRIS dan lakukan transfer, kemudian unggah bukti pembayaran di bawah ini.</p>
                 </div>
 
                 <div class="mb-3" id="bukti_bayar_container">
@@ -276,7 +283,9 @@
                 <input type="hidden" id="input_nominal_bayar">
             </div>
             <div class="modal-footer border-0 pb-4 px-4 pt-0">
-                <button type="button" class="btn rounded-pill px-4 btn-outline-primary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; border-radius: 50%;" data-bs-dismiss="modal" title="Batal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
                 <button type="button" id="btnProsesBayar" class="btn rounded-pill px-4 btn-outline-success" >Proses Bayar</button>
             </div>
         </div>
@@ -284,8 +293,6 @@
 </div>
 
 {{-- SCRIPT --}}
-<script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const modalElement = document.getElementById('modalBayarIuranBaru');
@@ -317,8 +324,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const selectMetode = document.getElementById('metode_pembayaran');
+    const qrisImageContainer = document.getElementById('qris_image_container');
     const buktiBayarContainer = document.getElementById('bukti_bayar_container');
     const fileInput = document.getElementById('bukti_bayar');
+
+    function toggleBuktiContainer() {
+        if (selectMetode) {
+            if (selectMetode.value === 'transfer') {
+                if (qrisImageContainer) qrisImageContainer.style.display = 'block';
+            } else {
+                if (qrisImageContainer) qrisImageContainer.style.display = 'none';
+            }
+            if (buktiBayarContainer) buktiBayarContainer.style.display = 'block';
+            if (fileInput) fileInput.required = true;
+        }
+    }
+
+    if (selectMetode) {
+        selectMetode.addEventListener('change', toggleBuktiContainer);
+    }
 
     document.querySelectorAll('.btn-buka-modal').forEach(button => {
         button.onclick = function() {
@@ -330,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (fileInput) {
                 fileInput.value = '';
             }
+            toggleBuktiContainer();
             updateHarga();
             modalBayar.show();
         };
@@ -342,17 +367,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const nominal = inputNominal.value;
 
         if (nominal == 0 || nominal == "") {
-            alert("Nominal pembayaran tidak valid!");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: 'Nominal pembayaran tidak valid!',
+                confirmButtonColor: '#994D1C'
+            });
             return;
         }
 
-        if (metode === 'tunai' && (!fileInput.files || fileInput.files.length === 0)) {
-            alert("Harap unggah bukti pembayaran!");
+        if (!fileInput.files || fileInput.files.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: 'Harap unggah bukti pembayaran!',
+                confirmButtonColor: '#994D1C'
+            });
             return;
         }
 
         if (fileInput.files && fileInput.files[0] && fileInput.files[0].size > 2 * 1024 * 1024) {
-            alert("Ukuran bukti pembayaran maksimal 2MB!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Berkas Terlalu Besar',
+                text: 'Ukuran bukti pembayaran maksimal 2MB!',
+                confirmButtonColor: '#994D1C'
+            });
             return;
         }
 
@@ -378,26 +418,32 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                if (data.metode === 'transfer') {
-                    modalBayar.hide();
-                    window.snap.pay(data.token, {
-                        onSuccess: function(result) { location.reload(); },
-                        onPending: function(result) { location.reload(); },
-                        onError: function() { alert("Pembayaran Gagal!"); resetBtn(); },
-                        onClose: function() { resetBtn(); }
-                    });
-                } else {
-                    alert(data.message);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: data.message,
+                    confirmButtonColor: '#994D1C'
+                }).then(() => {
                     location.reload();
-                }
+                });
             } else {
-                alert("Error: " + data.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: data.message || 'Terjadi kesalahan.',
+                    confirmButtonColor: '#994D1C'
+                });
                 resetBtn();
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert("Terjadi kesalahan sistem!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Sistem Error',
+                text: 'Terjadi kesalahan sistem!',
+                confirmButtonColor: '#994D1C'
+            });
             resetBtn();
         });
     };

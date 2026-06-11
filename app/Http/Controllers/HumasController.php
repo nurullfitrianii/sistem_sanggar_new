@@ -25,7 +25,7 @@ class HumasController extends Controller
     public function absensiIndex(Request $request)
     {
         $query = Absensi::with([
-                'user.pendaftaran',
+                'user.pendaftaran.programKelas',
                 'jadwalLatihan.programKelas'
             ])
             ->orderByDesc('waktu_hadir');
@@ -39,8 +39,12 @@ class HumasController extends Controller
         }
 
         if ($request->filled('id_program')) {
-            $query->whereHas('jadwalLatihan', function ($q) use ($request) {
-                $q->where('id_program', $request->id_program);
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('jadwalLatihan', function ($sub) use ($request) {
+                    $sub->where('id_program', $request->id_program);
+                })->orWhereHas('user.pendaftaran', function ($sub) use ($request) {
+                    $sub->where('id_program', $request->id_program);
+                });
             });
         }
 
@@ -58,9 +62,10 @@ class HumasController extends Controller
 
         // Mapping siswaList ke array sederhana untuk dipakai di JavaScript
         $siswaListJson = $siswaList->map(fn($s) => [
-            'id'       => $s->id_user,
-            'nama'     => $s->pendaftaran->nama_calon ?? $s->username,
-            'username' => $s->username,
+            'id'         => $s->id_user,
+            'nama'       => $s->pendaftaran->nama_calon ?? $s->username,
+            'username'   => $s->username,
+            'id_program' => $s->pendaftaran->id_program ?? null,
         ])->values();
 
         $jadwalList = JadwalLatihan::with('programKelas')
@@ -71,5 +76,19 @@ class HumasController extends Controller
             'absensi', 'programs', 'totalHadir', 'totalAlfa', 'totalIzin', 'totalHariIni',
             'siswaList', 'siswaListJson', 'jadwalList'
         ));
+    }
+
+    /**
+     * Export Rekap Absensi ke Excel
+     */
+    public function exportAbsensiExcel(Request $request)
+    {
+        $tanggal = $request->query('tanggal');
+        $status = $request->query('status');
+        $id_program = $request->query('id_program');
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\LaporanAbsensiExport($tanggal, $status, $id_program),
+            'Laporan_Absensi_Humas_' . ($tanggal ?? 'Semua') . '.xlsx'
+        );
     }
 }

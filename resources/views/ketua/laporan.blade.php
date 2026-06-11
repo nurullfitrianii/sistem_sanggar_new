@@ -20,11 +20,14 @@
                     </thead>
                     <tbody>
                         @foreach($laporan as $item)
+                        @php
+                            $jadwal = $item->getJadwal();
+                        @endphp
                         <tr>
                             <td>{{ \Carbon\Carbon::parse($item->waktu_hadir)->format('d/m/Y') }}</td>
                             <td class="text-primary">{{ \Carbon\Carbon::parse($item->waktu_hadir)->format('H:i') }} WIB</td>
                             <td class="">{{ $item->user->nama_lengkap ?? $item->user->username ?? '-' }}</td>
-                            <td>{{ $item->jadwalLatihan->programKelas->nama_program ?? '-' }}</td>
+                            <td>{{ $jadwal->programKelas->nama_program ?? $item->user->pendaftaran->programKelas->nama_program ?? '-' }}</td>
                             <td><span class="badge bg-success">{{ $item->status }}</span></td>
                         </tr>
                         @endforeach

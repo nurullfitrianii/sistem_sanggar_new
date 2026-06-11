@@ -28,9 +28,12 @@
                         <div class="fw-bold text-dark">{{ $p->user->username }}</div>
                         <small class="text-muted">ID: {{ $p->id_user }}</small>
                     </td>
+                    @php
+                        $jadwal = $p->getJadwal();
+                    @endphp
                     <td>
-                        <div class="text-dark">{{ $p->jadwalLatihan->hari }}, {{ $p->jadwalLatihan->jam_mulai }}</div>
-                        <span class="badge bg-soft-primary text-primary small">{{ $p->jadwalLatihan->programKelas->nama_program }}</span>
+                        <div class="text-dark">{{ $jadwal->hari ?? '-' }}, {{ $jadwal->jam_mulai ?? '-' }}</div>
+                        <span class="badge bg-soft-primary text-primary small">{{ $jadwal->programKelas->nama_program ?? $p->user->pendaftaran->programKelas->nama_program ?? '-' }}</span>
                     </td>
                     <td>
                         <div class="small text-muted">{{ \Carbon\Carbon::parse($p->waktu_hadir)->translatedFormat('d F Y') }}</div>

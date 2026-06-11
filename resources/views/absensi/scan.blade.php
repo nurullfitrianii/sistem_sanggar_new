@@ -40,9 +40,19 @@
             </div>
 
             <div class="card-footer bg-white py-4 text-center">
-                <a href="{{ route('absensi.index') }}" class="btn rounded-pill px-5 py-2 fw-semibold btn-outline-primary">
-                    Kembali
-                </a>
+                @if(auth()->user()->role === 'Ketua')
+                    <a href="{{ route('laporan.absensi') }}" class="btn rounded-pill px-5 py-2 fw-semibold btn-outline-primary">
+                        Kembali
+                    </a>
+                @elseif(auth()->user()->role === 'Humas')
+                    <a href="{{ route('humas.absensi.index') }}" class="btn rounded-pill px-5 py-2 fw-semibold btn-outline-primary">
+                        Kembali
+                    </a>
+                @else
+                    <a href="javascript:history.back()" class="btn rounded-pill px-5 py-2 fw-semibold btn-outline-primary">
+                        Kembali
+                    </a>
+                @endif
             </div>
         </div>
 

@@ -243,8 +243,15 @@
                                 <td class="text-end pe-3">
                                     @if($item->no_hp)
                                         @php
-                                            $unpaidMonthsNames = collect($item->unpaid_months)->pluck('bulan')->implode(', ');
-                                            $message = "Halo *" . $item->nama_lengkap . "*,\n\nKami dari pengurus *Sanggar Seni Goong Prasasti* ingin menginfokan bahwa terdapat tunggakan iuran latihan untuk bulan: *" . $unpaidMonthsNames . "* dengan total sebesar *Rp " . number_format($item->total_arrears, 0, ',', '.') . "*.\n\nMohon untuk segera melakukan pembayaran iuran melalui dashboard siswa atau menyetorkannya langsung kepada pengurus.\n\nTerima kasih. 🙏";
+                                            $unpaidMonthsNames = collect($item->unpaid_months)
+                                                ->pluck('bulan')
+                                                ->map(function($b) {
+                                                    $en = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                                    $id = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                                                    return str_replace($en, $id, $b);
+                                                })
+                                                ->implode(', ');
+                                            $message = "Assalamu'alaikum wr. wb.\n\nKami dari Sanggar Seni Goong Prasasti ingin menginformasikan bahwa saat ini masih terdapat tunggakan iuran latihan atas nama *" . $item->nama_lengkap . "* untuk bulan *" . $unpaidMonthsNames . "* sebesar *Rp " . number_format($item->total_arrears, 0, ',', '.') . "*.\n\nMohon untuk segera melakukan pembayaran. Pembayaran dapat dilakukan melalui menu pembayaran di profil siswa atau langsung transfer ke rekening sanggar. Apabila ada kendala atau jika pembayaran telah dilakukan, mohon hubungi kami untuk konfirmasi.\n\nTerima kasih atas perhatian dan kerja samanya.\n\nAdmin Sanggar Seni Goong Prasasti";
                                             
                                             $phone = preg_replace('/[^0-9]/', '', $item->no_hp);
                                             if (strpos($phone, '0') === 0) {

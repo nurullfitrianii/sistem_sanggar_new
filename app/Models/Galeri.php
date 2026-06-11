@@ -14,8 +14,28 @@ class Galeri extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_sanggar', 'judul', 'foto', 'keterangan'
+        'id_sanggar', 'judul', 'foto', 'keterangan', 'tanggal', 'gambar', 'deskripsi'
     ];
+
+    public function getGambarAttribute()
+    {
+        return $this->attributes['foto'] ?? null;
+    }
+
+    public function setGambarAttribute($value)
+    {
+        $this->attributes['foto'] = $value;
+    }
+
+    public function getDeskripsiAttribute()
+    {
+        return $this->attributes['keterangan'] ?? null;
+    }
+
+    public function setDeskripsiAttribute($value)
+    {
+        $this->attributes['keterangan'] = $value;
+    }
 
     public function sanggar()
     {

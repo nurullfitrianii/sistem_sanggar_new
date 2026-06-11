@@ -19,37 +19,78 @@ class JadwalController extends Controller
         $sanggarDefault = Sanggar::first();
 
         foreach ($programs as $p) {
+            $isTari = str_contains(strtolower($p->kategori ?? ''), 'tari') || str_contains(strtolower($p->nama_program ?? ''), 'tari');
+            $expectedJamMulai = $isTari ? '10:00:00' : '13:00:00';
+            $expectedJamSelesai = $isTari ? '13:00:00' : '15:00:00';
+
             $jadwals = JadwalLatihan::where('id_program', $p->id_program)->get();
-            
-            if ($jadwals->isEmpty()) {
-                // Jika kosong sama sekali, buatkan draft Sabtu & Minggu
-                foreach (['Sabtu', 'Minggu'] as $h) {
-                    JadwalLatihan::create([
-                        'id_program'  => $p->id_program,
-                        'id_pelatih'  => $pelatihDefault->id_pelatih ?? 1,
-                        'id_sanggar'  => $sanggarDefault->id_sanggar ?? 1,
-                        'hari'         => $h,
-                        'jam_mulai'    => '13:00:00',
-                        'jam_selesai'  => '17:00:00',
-                        'lokasi'       => 'Sanggar Utama',
-                        'materi'       => 'Latihan Rutin'
+            $grouped = $jadwals->groupBy(function ($j) {
+                return ucfirst(strtolower(trim($j->hari)));
+            });
+
+            // Pastikan jadwal Sabtu ada, unik, dan jamnya sesuai
+            if (!$grouped->has('Sabtu')) {
+                JadwalLatihan::create([
+                    'id_program'  => $p->id_program,
+                    'id_pelatih'  => $pelatihDefault->id_pelatih ?? null,
+                    'id_sanggar'  => $sanggarDefault->id_sanggar ?? null,
+                    'hari'        => 'Sabtu',
+                    'jam_mulai'   => $expectedJamMulai,
+                    'jam_selesai' => $expectedJamSelesai,
+                    'lokasi'      => 'Sanggar Goong Prasasti',
+                    'materi'      => 'Latihan Rutin'
+                ]);
+            } else {
+                $sabtuList = $grouped->get('Sabtu');
+                $keep = $sabtuList->first();
+                if ($keep->jam_mulai !== $expectedJamMulai || $keep->jam_selesai !== $expectedJamSelesai) {
+                    $keep->update([
+                        'jam_mulai'   => $expectedJamMulai,
+                        'jam_selesai' => $expectedJamSelesai
                     ]);
                 }
-            } elseif ($jadwals->count() == 1) {
-                // Jika cuma ada 1 hari, buatkan pasangannya
-                $ref = $jadwals->first();
-                $missingDay = (strtolower(trim($ref->hari)) === 'sabtu') ? 'Minggu' : 'Sabtu';
-                
+                if ($sabtuList->count() > 1) {
+                    foreach ($sabtuList->slice(1) as $dup) {
+                        $dup->delete();
+                    }
+                }
+            }
+
+            // Pastikan jadwal Minggu ada, unik, dan jamnya sesuai
+            if (!$grouped->has('Minggu')) {
                 JadwalLatihan::create([
-                    'id_program'  => $ref->id_program,
-                    'id_pelatih'  => $ref->id_pelatih,
-                    'id_sanggar'  => $ref->id_sanggar,
-                    'hari'         => $missingDay,
-                    'jam_mulai'    => $ref->jam_mulai,
-                    'jam_selesai'  => $ref->jam_selesai,
-                    'lokasi'       => $ref->lokasi,
-                    'materi'       => 'Latihan Rutin'
+                    'id_program'  => $p->id_program,
+                    'id_pelatih'  => $pelatihDefault->id_pelatih ?? null,
+                    'id_sanggar'  => $sanggarDefault->id_sanggar ?? null,
+                    'hari'        => 'Minggu',
+                    'jam_mulai'   => $expectedJamMulai,
+                    'jam_selesai' => $expectedJamSelesai,
+                    'lokasi'      => 'Sanggar Goong Prasasti',
+                    'materi'      => 'Latihan Rutin'
                 ]);
+            } else {
+                $mingguList = $grouped->get('Minggu');
+                $keep = $mingguList->first();
+                if ($keep->jam_mulai !== $expectedJamMulai || $keep->jam_selesai !== $expectedJamSelesai) {
+                    $keep->update([
+                        'jam_mulai'   => $expectedJamMulai,
+                        'jam_selesai' => $expectedJamSelesai
+                    ]);
+                }
+                if ($mingguList->count() > 1) {
+                    foreach ($mingguList->slice(1) as $dup) {
+                        $dup->delete();
+                    }
+                }
+            }
+
+            // Hapus hari-hari selain Sabtu dan Minggu jika ada
+            foreach ($grouped as $hari => $list) {
+                if ($hari !== 'Sabtu' && $hari !== 'Minggu') {
+                    foreach ($list as $otherDayJadwal) {
+                        $otherDayJadwal->delete();
+                    }
+                }
             }
         }
 
@@ -87,7 +128,12 @@ class JadwalController extends Controller
             'materi'      => ['nullable', 'string'],
         ]);
 
-        JadwalLatihan::create($data);
+        $jadwal = JadwalLatihan::create($data);
+
+        // Sinkronisasi pelatih ke semua jadwal lain dengan program kelas yang sama
+        JadwalLatihan::where('id_program', $jadwal->id_program)
+            ->update(['id_pelatih' => $jadwal->id_pelatih]);
+
         return redirect()->route('jadwal.index')->with('success', 'Data jadwal berhasil disimpan.');
     }
 
@@ -115,6 +161,12 @@ class JadwalController extends Controller
         ]);
 
         $jadwal->update($data);
+
+        // Sinkronisasi pelatih ke semua jadwal lain dengan program kelas yang sama jika diubah
+        if (isset($data['id_pelatih'])) {
+            JadwalLatihan::where('id_program', $jadwal->id_program)
+                ->update(['id_pelatih' => $data['id_pelatih']]);
+        }
 
         return redirect()->route('jadwal.index')->with('success', 'Data jadwal berhasil diperbarui.');
     }

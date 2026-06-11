@@ -32,7 +32,8 @@ use Illuminate\Support\Facades\Mail;
 Route::get('/', [ProgramController::class, 'home'])->name('home');
 
 Route::get('/galeri-foto', function () {
-    return view('dashboard.galeri-foto');
+    $galleries = \App\Models\Galeri::orderByDesc('tanggal')->get();
+    return view('dashboard.galeri-foto', compact('galleries'));
 })->name('galeri-foto');
 
 Route::get('/galeri-video', function () {
@@ -107,6 +108,7 @@ Route::prefix('daftar')->group(function () {
 
     // Route untuk menampilkan halaman yang ada tombol "Bayar Sekarang" Midtrans
     Route::get('/pembayaran/{id}', [PendaftaranController::class, 'pembayaran'])->name('pendaftaran.pembayaran');
+    Route::post('/pembayaran/{id}/bukti', [PendaftaranController::class, 'uploadBuktiPendaftaran'])->name('pendaftaran.uploadBukti');
 
     Route::post('/midtrans/callback', [App\Http\Controllers\MidtransController::class, 'callback']);
 });
@@ -143,9 +145,11 @@ Route::middleware(['auth', 'role:Ketua'])->group(function () {
     Route::get('absensi', [AbsensiController::class, 'laporanKehadiran'])->name('absensi.index');
     Route::resource('keuangan', KeuanganController::class);
     Route::get('/laporan/keuangan', [LaporanController::class, 'keuangan'])->name('laporan.keuangan');
-   Route::get('/laporan/keuangan/export', [LaporanController::class, 'exportExcel'])->name('laporan.keuangan.export');
+    Route::get('/laporan/keuangan/export', [LaporanController::class, 'exportExcel'])->name('laporan.keuangan.export');
+    Route::get('/laporan/keuangan/pdf', [LaporanController::class, 'exportKeuanganPDF'])->name('laporan.keuangan.pdf');
     Route::get('/laporan/absensi', [LaporanController::class, 'absensi'])->name('laporan.absensi');
     Route::get('/laporan/absensi/pdf', [LaporanController::class, 'exportAbsensiPDF'])->name('laporan.absensi.pdf');
+    Route::get('/laporan/absensi/excel', [LaporanController::class, 'exportAbsensiExcel'])->name('laporan.absensi.excel');
     Route::get('/laporan/anggota', [LaporanController::class, 'anggota'])->name('laporan.anggota');
 
     // Approval Absensi oleh Ketua
@@ -174,6 +178,7 @@ Route::middleware(['auth', 'role:Humas'])->group(function () {
 
     // Halaman Rekap Absensi untuk Humas
     Route::get('/humas/absensi', [HumasController::class, 'absensiIndex'])->name('humas.absensi.index');
+    Route::get('/humas/absensi/excel', [HumasController::class, 'exportAbsensiExcel'])->name('humas.absensi.excel');
 });
 
 // BENDAHARA
@@ -181,7 +186,8 @@ Route::middleware(['auth', 'role:Bendahara'])->group(function () {
     Route::get('/dashboard/bendahara', [BendaharaController::class, 'index'])->name('dashboard.bendahara');
     Route::resource('keuangan-bendahara', KeuanganController::class)->only(['index', 'create', 'store', 'destroy']);
     Route::get('/laporan/keuangan-bendahara', [LaporanController::class, 'keuangan'])->name('laporan.keuangan.bendahara');
-    Route::get('/laporan/keuangan-bendahara/export', [LaporanController::class, 'exportCsv'])->name('laporan.keuangan.bendahara.export');
+    Route::get('/laporan/keuangan-bendahara/export', [LaporanController::class, 'exportExcel'])->name('laporan.keuangan.bendahara.export');
+    Route::get('/laporan/keuangan-bendahara/pdf', [LaporanController::class, 'exportKeuanganPDF'])->name('laporan.keuangan.bendahara.pdf');
     Route::post('/bendahara/verifikasi/{type}/{id}/{aksi}', [BendaharaController::class, 'verifikasi'])->name('bendahara.verifikasi');
     Route::get('/bendahara/verifikasi', [BendaharaController::class, 'verifikasiIndex'])->name('bendahara.verifikasi_index');
 

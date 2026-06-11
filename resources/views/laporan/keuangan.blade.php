@@ -16,14 +16,20 @@
                 Terapkan Filter
             </button>
 
-            <div class="export-actions">
+            <div class="export-actions d-flex gap-2">
                 @if(auth()->user()->role === 'Bendahara')
-                    <a href="{{ route('laporan.keuangan.bendahara.export', request()->all()) }}" class="btn px-4 shadow-sm btn-outline-primary">
-                        Cetak Excel
+                    <a href="{{ route('laporan.keuangan.bendahara.export', request()->all()) }}" class="btn btn-success rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-file-earmark-excel-fill"></i> Cetak Excel
+                    </a>
+                    <a href="{{ route('laporan.keuangan.bendahara.pdf', request()->all()) }}" class="btn btn-danger rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Cetak PDF
                     </a>
                 @else
-                    <a href="{{ route('laporan.keuangan.export', request()->all()) }}" class="btn px-4 shadow-sm btn-outline-primary">
-                        Cetak Excel
+                    <a href="{{ route('laporan.keuangan.export', request()->all()) }}" class="btn btn-success rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-file-earmark-excel-fill"></i> Cetak Excel
+                    </a>
+                    <a href="{{ route('laporan.keuangan.pdf', request()->all()) }}" class="btn btn-danger rounded-3 px-3 d-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Cetak PDF
                     </a>
                 @endif
             </div>

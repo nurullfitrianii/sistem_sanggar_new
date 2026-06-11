@@ -14,4 +14,33 @@ class Absensi extends Model {
     public function jadwalLatihan() {
         return $this->belongsTo(JadwalLatihan::class, 'id_jadwal', 'id_jadwal');
     }
+    
+    public function getJadwal() {
+        if ($this->jadwalLatihan) {
+            return $this->jadwalLatihan;
+        }
+
+        $pendaftaran = $this->user->pendaftaran ?? null;
+        $id_program = $pendaftaran ? $pendaftaran->id_program : null;
+
+        if ($id_program) {
+            $englishDay = \Carbon\Carbon::parse($this->waktu_hadir)->format('l');
+            $hariMap = [
+                'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
+                'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'
+            ];
+            $hari = $hariMap[$englishDay] ?? 'Sabtu';
+
+            $jadwal = \App\Models\JadwalLatihan::where('id_program', $id_program)
+                ->where('hari', $hari)
+                ->first();
+
+            if (!$jadwal) {
+                $jadwal = \App\Models\JadwalLatihan::where('id_program', $id_program)->first();
+            }
+            return $jadwal;
+        }
+
+        return null;
+    }
 }

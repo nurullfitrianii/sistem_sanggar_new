@@ -8,7 +8,7 @@
     $monthName = $now->translatedFormat('F Y');
 
     $isSeniTari = strpos(strtolower($defaultTab), 'tari') !== false;
-    $timeRange = $isSeniTari ? '10:00 - 13:00' : '13:00 - 17:00';
+    $timeRange = $isSeniTari ? '10:00 - 13:00' : '13:00 - 15:00';
     $programName = $defaultTab ?: 'Kelas Sanggar';
 @endphp
 
@@ -55,7 +55,7 @@
                     @if($isWeekend && $defaultTab)
                         <div class="event-tag shadow-sm" style="background-color: #DD9E59; color: white;">
                             <div class="fw-bold text-truncate">{{ $isSeniTari ? 'Tari' : 'Karawitan' }}</div>
-                            <small class="fw-semibold opacity-100">{{ $isSeniTari ? '10:00-13:00' : '13:00-17:00' }}</small>
+                            <small class="fw-semibold opacity-100">{{ $isSeniTari ? '10:00-13:00' : '13:00-15:00' }}</small>
                         </div>
                     @endif
                 </div>

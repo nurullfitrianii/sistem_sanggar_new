@@ -13,14 +13,14 @@
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert" style="background-color: #ECFDF5; color: #10B981;">
     {{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">Aksi</button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 @endif
 
 @if(session('error'))
 <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert" style="background-color: #FEF2F2; color: #EF4444;">
     {{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">Aksi</button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 @endif
 
@@ -78,7 +78,7 @@
                                                 <div class="modal-content border-0 shadow-lg rounded-4 text-start">
                                                     <div class="modal-header border-0 pb-0 pt-4 px-4">
                                                         <h5 class="fw-bold">Bukti Transfer</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">Aksi</button>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                     </div>
                                                     <div class="modal-body p-4 text-center">
                                                         <img src="{{ asset('storage/' . $iuran->bukti_bayar) }}" alt="Bukti Pembayaran" class="img-fluid rounded-3" style="max-height: 400px; object-fit: contain;">
@@ -89,18 +89,18 @@
                                     @endif
 
                                     @if($iuran->status == 'pending')
-                                        <form action="{{ route('bendahara.iuran.status', $iuran->id) }}" method="POST" class="m-0">
+                                        <form id="approve-iuran-form-{{ $iuran->id }}" action="{{ route('bendahara.iuran.status', $iuran->id) }}" method="POST" class="m-0">
                                             @csrf
                                             <input type="hidden" name="status" value="valid">
-                                            <button type="submit" class="btn btn-sm rounded-pill px-3 shadow-sm btn-outline-success"  onclick="return confirm('Yakin ingin memvalidasi iuran ini?');">
+                                            <button type="button" class="btn btn-sm rounded-pill px-3 shadow-sm btn-outline-success" onclick="confirmAction('approve-iuran-form-{{ $iuran->id }}', 'Yakin ingin memvalidasi iuran ini?')">
                                                 Valid
                                             </button>
                                         </form>
                                         
-                                        <form action="{{ route('bendahara.iuran.status', $iuran->id) }}" method="POST" class="m-0">
+                                        <form id="reject-iuran-form-{{ $iuran->id }}" action="{{ route('bendahara.iuran.status', $iuran->id) }}" method="POST" class="m-0">
                                             @csrf
                                             <input type="hidden" name="status" value="ditolak">
-                                            <button type="submit" class="btn btn-sm rounded-pill px-3 shadow-sm btn-outline-danger"  onclick="return confirm('Yakin ingin menolak iuran ini?');">
+                                            <button type="button" class="btn btn-sm rounded-pill px-3 shadow-sm btn-outline-danger" onclick="confirmAction('reject-iuran-form-{{ $iuran->id }}', 'Yakin ingin menolak iuran ini?')">
                                                 Tolak
                                             </button>
                                         </form>
@@ -123,4 +123,25 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function confirmAction(formId, message) {
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#994D1C',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Lanjutkan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        });
+    }
+</script>
+@endpush
 @endsection

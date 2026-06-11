@@ -20,10 +20,17 @@ class ProfileController extends Controller
 
         $request->validate([
             'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($user->id_user, 'id_user')],
+            'email' => ['required', 'email', 'max:191', Rule::unique('users')->ignore($user->id_user, 'id_user')],
             'password' => ['nullable', 'min:6', 'confirmed'],
         ]);
 
         $user->username = $request->username;
+
+        // Jika email diubah, reset google_id agar bisa login dengan Google menggunakan akun baru
+        if ($user->email !== $request->email) {
+            $user->email = $request->email;
+            $user->google_id = null;
+        }
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);

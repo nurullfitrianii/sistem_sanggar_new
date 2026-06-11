@@ -27,7 +27,7 @@ class SiswaController extends Controller
         
         $statusPendaftaran = strtolower($pendaftaran->status_pembayaran ?? '');
         // Siswa yang berstatus Aktif pendaftaran awalnya pasti sudah lunas
-        $isPaid = in_array($statusPendaftaran, ['success', 'settlement', 'lunas']) || $user->status === 'Aktif';
+        $isPaid = in_array($statusPendaftaran, ['success', 'settlement', 'lunas']);
 
         if (!$regExists) {
             $statusReg = $isPaid ? 'Lunas' : 'Belum Bayar';
@@ -137,7 +137,7 @@ class SiswaController extends Controller
         $buktiBayarPath = $pembayaran->bukti_bayar;
         if ($request->hasFile('bukti_bayar')) {
             $request->validate([
-                'bukti_bayar' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+                'bukti_bayar' => 'required|file|mimes:jpg,jpeg,png,pdf,webp|max:2048',
             ]);
             $buktiBayarPath = $request->file('bukti_bayar')->store('bukti_bayar', 'public');
         }
@@ -159,38 +159,27 @@ class SiswaController extends Controller
             ]);
         }
 
-        // Jika Transfer via Midtrans → set pending dulu, callback yang selesaikan
-        $pembayaran->update([
-            'tipe_iuran'        => $request->tipe_iuran,
-            'metode_pembayaran' => $request->metode_pembayaran,
-            'jumlah'            => $request->jumlah_bayar,
-            'status'            => 'Menunggu Verifikasi',
-            'bukti_bayar'       => $buktiBayarPath,
-        ]);
+        // Jika Transfer via QRIS → tunggu verifikasi bendahara
+        if ($request->metode_pembayaran === 'transfer') {
+            $pembayaran->update([
+                'tipe_iuran'        => $request->tipe_iuran,
+                'metode_pembayaran' => $request->metode_pembayaran,
+                'jumlah'            => $request->jumlah_bayar,
+                'status'            => 'Menunggu Verifikasi',
+                'bukti_bayar'       => $buktiBayarPath,
+            ]);
 
-        \Midtrans\Config::$serverKey = config('midtrans.server_key');
-        \Midtrans\Config::$isProduction = false;
-        \Midtrans\Config::$isSanitized = true;
-        \Midtrans\Config::$is3ds = true;
-
-        $params = [
-            'transaction_details' => [
-                'order_id'     => 'IUR-' . $pembayaran->id_pembayaran . '-' . uniqid(),
-                'gross_amount' => (int) $request->jumlah_bayar,
-            ],
-            'customer_details' => [
-                'first_name' => $user->username,
-                'email'      => $user->email,
-            ],
-        ];
-
-        $snapToken = \Midtrans\Snap::getSnapToken($params);
+            return response()->json([
+                'status'  => 'success',
+                'metode'  => 'transfer',
+                'message' => 'Bukti pembayaran transfer/QRIS berhasil diunggah. Menunggu verifikasi dari bendahara.'
+            ]);
+        }
 
         return response()->json([
-            'status' => 'success',
-            'metode' => 'transfer',
-            'token'  => $snapToken
-        ]);
+            'status'  => 'error',
+            'message' => 'Metode pembayaran tidak dikenal.'
+        ], 400);
     }
 
     /**

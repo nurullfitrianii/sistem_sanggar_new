@@ -27,6 +27,7 @@ class SiswaAdminController extends Controller
     {
         $data = $request->validate([
             'username' => ['required', 'string', 'max:50', 'unique:users,username'],
+            'email'    => ['nullable', 'email', 'max:191', 'unique:users,email'],
             'password' => ['required', 'min:6'],
             'status'   => ['required', Rule::in(['Aktif', 'Nonaktif'])],
         ]);
@@ -48,12 +49,17 @@ class SiswaAdminController extends Controller
     {
         $data = $request->validate([
             'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($siswa_admin->id_user, 'id_user')],
+            'email'    => ['nullable', 'email', 'max:191', Rule::unique('users')->ignore($siswa_admin->id_user, 'id_user')],
             'status'   => ['required', Rule::in(['Aktif', 'Nonaktif'])],
         ]);
 
         if ($request->filled('password')) {
             $request->validate(['password' => ['min:6']]);
             $data['password'] = Hash::make($request->password);
+        }
+
+        if ($siswa_admin->email !== $request->email) {
+            $data['google_id'] = null;
         }
 
         $siswa_admin->update($data);

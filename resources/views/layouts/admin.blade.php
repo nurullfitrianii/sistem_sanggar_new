@@ -57,7 +57,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('absensi.index') }}" class="nav-link {{ request()->routeIs('absensi.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.absensi') }}" class="nav-link {{ request()->routeIs('laporan.absensi') ? 'active' : '' }}">
                         Laporan Kehadiran
                     </a>
                 </li>

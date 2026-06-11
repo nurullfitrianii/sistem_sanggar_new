@@ -40,11 +40,12 @@
                             <a href="{{ route('program-admin.edit', $program->id_program) }}" class="btn btn-sm rounded-pill px-3 btn-outline-warning">
                                 Edit
                             </a>
-                            <form action="{{ route('program-admin.destroy', $program->id_program) }}" method="POST" class="d-inline"
-                                  onsubmit="return confirm('Hapus program ini?');">
+                            <form action="{{ route('program-admin.destroy', $program->id_program) }}" method="POST" class="d-inline form-delete">
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-sm rounded-pill px-3 btn-outline-danger">Hapus</button>
+                                <button type="button" class="btn btn-sm rounded-pill px-3 btn-outline-danger btn-delete" data-message="Apakah anda yakin ingin menghapus program '{{ $program->nama_program }}'?">
+                                    Hapus
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -60,5 +61,36 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButtons = document.querySelectorAll('.btn-delete');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                const message = this.getAttribute('data-message') || 'Apakah Anda yakin ingin menghapus data ini?';
+                
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
+</script>
+@endpush
 @endsection
 

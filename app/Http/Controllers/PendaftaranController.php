@@ -53,7 +53,7 @@ class PendaftaranController extends Controller
             'alamat'        => 'required|string',
             'email'         => 'required|email|max:255',
             'tanggal_lahir' => 'required|date',
-            'dokumen'       => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'dokumen'       => 'nullable|file|mimes:jpg,jpeg,png,pdf,webp|max:2048',
         ]);
 
         if ($request->hasFile('dokumen')) {
@@ -98,6 +98,14 @@ class PendaftaranController extends Controller
             return response()->json(['success' => false, 'message' => 'Sesi habis'], 400);
         }
 
+        $buktiBayarPath = null;
+        if ($request->hasFile('bukti_bayar')) {
+            $request->validate([
+                'bukti_bayar' => 'required|file|mimes:jpg,jpeg,png,pdf,webp|max:2048',
+            ]);
+            $buktiBayarPath = $request->file('bukti_bayar')->store('bukti_bayar', 'public');
+        }
+
         $username = strtolower(str_replace(' ', '', $sessionData['nama_calon']));
         $password = $sessionData['no_hp'];
 
@@ -126,7 +134,8 @@ class PendaftaranController extends Controller
                 'dokumen'           => $sessionData['dokumen'] ?? null,
                 'metode_pembayaran' => $metode,
                 'status'            => 'Menunggu',
-                'status_pembayaran' => ($metode == 'transfer') ? 'pending' : 'belum lunas'
+                'status_pembayaran' => ($metode == 'transfer') ? 'pending' : 'belum lunas',
+                'bukti_bayar'       => $buktiBayarPath
             ]);
 
             DB::commit();
@@ -150,6 +159,25 @@ class PendaftaranController extends Controller
     {
         $pendaftaran = Pendaftaran::with('programKelas')->findOrFail($id);
         return view('pendaftaran.pembayaran', compact('pendaftaran'));
+    }
+
+    public function uploadBuktiPendaftaran(Request $request, $id)
+    {
+        $request->validate([
+            'bukti_bayar' => 'required|file|mimes:jpg,jpeg,png,pdf,webp|max:2048',
+        ]);
+
+        $pendaftaran = Pendaftaran::findOrFail($id);
+
+        if ($request->hasFile('bukti_bayar')) {
+            $path = $request->file('bukti_bayar')->store('bukti_bayar', 'public');
+            $pendaftaran->update([
+                'bukti_bayar' => $path,
+                'status_pembayaran' => 'pending'
+            ]);
+        }
+
+        return redirect()->route('home')->with('success', 'Bukti pembayaran berhasil diunggah. Pendaftaran Anda sedang diproses.');
     }
 
     /**
@@ -194,7 +222,7 @@ class PendaftaranController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Pendaftaran ' . $pendaftaran->nama_calon . ' disetujui! Email notifikasi telah dikirim.');
+        return redirect()->back()->with('success', 'Pendaftaran ' . $pendaftaran->nama_calon . ' telah disetujui');
 
     } catch (\Exception $e) {
         DB::rollback();
@@ -227,6 +255,6 @@ class PendaftaranController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Pendaftaran ' . $pendaftaran->nama_calon . ' ditolak. Email notifikasi telah dikirim.');
+        return redirect()->back()->with('success', 'Pendaftaran ' . $pendaftaran->nama_calon . ' ditolak');
     }
 }

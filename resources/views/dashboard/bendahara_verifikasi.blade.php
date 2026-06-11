@@ -38,11 +38,11 @@
                                     <div class="small text-muted">ID: {{ $item->user->id_user ?? '-' }}</div>
                                 </td>
                                 <td>
-                                    @if($item->type == 'pendaftaran')
-                                        <span class="badge bg-warning text-dark border border-warning px-3 py-2 rounded-pill">PENDAFTARAN</span>
-                                    @else
-                                        <span class="badge bg-primary text-white border border-primary px-3 py-2 rounded-pill">IURAN</span>
-                                    @endif
+                                     @if($item->type == 'pendaftaran' || $item->type == 'pendaftaran_awal')
+                                         <span class="badge bg-warning text-dark border border-warning px-3 py-2 rounded-pill">PENDAFTARAN</span>
+                                     @else
+                                         <span class="badge bg-primary text-white border border-primary px-3 py-2 rounded-pill">IURAN</span>
+                                     @endif
                                 </td>
                                 <td>
                                     <div class="fw-bold text-dark">Rp {{ number_format($item->jumlah, 0, ',', '.') }}</div>
@@ -62,27 +62,27 @@
                                      <div class="d-flex justify-content-end gap-2">
                                          @if($item->type == 'pendaftaran' || $item->type == 'pendaftaran_awal' || $item->type == 'pembayaran')
                                              <!-- Action untuk Pendaftaran / Pembayaran -->
-                                             <form action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'terima']) }}" method="POST" class="m-0">
+                                             <form id="approve-form-{{ $item->type }}-{{ $item->id_item }}" action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'terima']) }}" method="POST" class="m-0">
                                                  @csrf
-                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="return confirm('Validasi pembayaran ini?');"> Valid </button>
+                                                 <button type="button" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="confirmAction('approve-form-{{ $item->type }}-{{ $item->id_item }}', 'Validasi pembayaran ini?')"> Valid </button>
                                              </form>
                                              
-                                             <form action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'tolak']) }}" method="POST" class="m-0">
+                                             <form id="reject-form-{{ $item->type }}-{{ $item->id_item }}" action="{{ route('bendahara.verifikasi', [$item->type, $item->id_item, 'tolak']) }}" method="POST" class="m-0">
                                                  @csrf
-                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="return confirm('Tolak pembayaran ini?');"> Tolak </button>
+                                                 <button type="button" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="confirmAction('reject-form-{{ $item->type }}-{{ $item->id_item }}', 'Tolak pembayaran ini?')"> Tolak </button>
                                              </form>
                                          @else
                                              <!-- Action untuk Iuran Mingguan / Lainnya -->
-                                             <form action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
+                                             <form id="approve-iuran-{{ $item->id_item }}" action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
                                                  @csrf
                                                  <input type="hidden" name="status" value="valid">
-                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="return confirm('Validasi {{ $item->kategori }} ini?');"> Valid </button>
+                                                 <button type="button" class="btn btn-sm px-3 rounded-pill btn-outline-success" onclick="confirmAction('approve-iuran-{{ $item->id_item }}', 'Validasi {{ $item->kategori }} ini?')"> Valid </button>
                                              </form>
                                              
-                                             <form action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
+                                             <form id="reject-iuran-{{ $item->id_item }}" action="{{ route('bendahara.iuran.status', $item->id_item) }}" method="POST" class="m-0">
                                                  @csrf
                                                  <input type="hidden" name="status" value="ditolak">
-                                                 <button type="submit" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="return confirm('Tolak {{ $item->kategori }} ini?');"> Tolak </button>
+                                                 <button type="button" class="btn btn-sm px-3 rounded-pill btn-outline-danger" onclick="confirmAction('reject-iuran-{{ $item->id_item }}', 'Tolak {{ $item->kategori }} ini?')"> Tolak </button>
                                              </form>
                                          @endif
                                      </div>
@@ -102,4 +102,25 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function confirmAction(formId, message) {
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#994D1C',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Lanjutkan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        });
+    }
+</script>
+@endpush
 @endsection

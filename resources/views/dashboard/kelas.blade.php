@@ -51,7 +51,7 @@
                         if ($jadwals->isEmpty()) {
                             // Fallback jika jadwal belum diisi di database
                             $isTari = str_contains(strtolower($item->kategori), 'tari');
-                            $defaultJam = $isTari ? '10.00 - 13.00' : '13.00 - 17.00';
+                            $defaultJam = $isTari ? '10.00 - 13.00' : '13.00 - 15.00';
                             $hariDefault = ['Sabtu', 'Minggu'];
                         }
                     @endphp
@@ -112,8 +112,8 @@
                 <div class="mt-auto pt-4 border-t border-gray-100">
                     <div class="bg-yellow-50/60 border border-yellow-200 rounded-xl p-4 flex justify-between items-end mb-4">
                         <div>
-                            <span class="text-orange-800/70 text-xs font-semibold block mb-1">Biaya Iuran</span>
-                            <span class="text-[#A47251] font-extrabold text-xl">Rp {{ number_format($item->biaya, 0, ',', '.') }}<span class="text-sm font-medium text-gray-500">/bulan</span></span>
+                            <span class="text-orange-800/70 text-xs font-semibold block mb-1">Biaya Pendaftaran</span>
+                            <span class="text-[#A47251] font-extrabold text-xl">Rp {{ number_format($item->biaya, 0, ',', '.') }}</span>
                         </div>
                         <span class="text-[#A47251] text-xs font-semibold">{{ $item->jumlah_sesi ?: '-' }}</span>
                     </div>

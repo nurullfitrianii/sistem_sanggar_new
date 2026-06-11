@@ -96,7 +96,7 @@ class ProgramController extends Controller
             'biaya'        => ['required', 'numeric', 'min:0'],
             'durasi'       => ['nullable', 'string', 'max:50'],
             'jumlah_sesi'  => ['nullable', 'string', 'max:50'],
-            'foto'         => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'foto'         => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'status'       => ['required', 'in:Aktif,Nonaktif'],
         ]);
 
@@ -124,7 +124,7 @@ class ProgramController extends Controller
             'biaya'        => ['required', 'numeric', 'min:0'],
             'durasi'       => ['nullable', 'string', 'max:50'],
             'jumlah_sesi'  => ['nullable', 'string', 'max:50'],
-            'foto'         => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'foto'         => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'status'       => ['required', 'in:Aktif,Nonaktif'],
         ]);
 
@@ -142,6 +142,25 @@ class ProgramController extends Controller
 
     public function destroy(Program $program_admin)
     {
+        // 1. Ambil semua jadwal latihan untuk program ini
+        $jadwalList = $program_admin->jadwalLatihan;
+
+        foreach ($jadwalList as $jadwal) {
+            // Hapus data absensi terkait jadwal
+            $jadwal->absensi()->delete();
+            // Hapus jadwal
+            $jadwal->delete();
+        }
+
+        // 2. Set id_program menjadi null di tabel pendaftaran
+        \App\Models\Pendaftaran::where('id_program', $program_admin->id_program)->update(['id_program' => null]);
+
+        // 3. Hapus foto dari storage jika ada
+        if ($program_admin->foto && \Storage::disk('public')->exists($program_admin->foto)) {
+            \Storage::disk('public')->delete($program_admin->foto);
+        }
+
+        // 5. Hapus program kelas
         $program_admin->delete();
 
         return redirect()->route('program-admin.index')->with('success', 'Program berhasil dihapus.');

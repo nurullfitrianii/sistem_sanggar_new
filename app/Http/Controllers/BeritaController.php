@@ -44,7 +44,7 @@ class BeritaController extends Controller
         $data = $request->validate([
             'judul'           => ['required', 'string', 'max:150'],
             'isi'             => ['required', 'string'],
-            'foto'            => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'foto'            => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'tanggal_publish' => ['required', 'date'],
             'tanggal_selesai' => ['nullable', 'date', 'after_or_equal:tanggal_publish'],
             'status'          => ['required', 'in:draft,published'],
@@ -74,7 +74,7 @@ class BeritaController extends Controller
         $data = $request->validate([
             'judul'           => ['required', 'string', 'max:150'],
             'isi'             => ['required', 'string'],
-            'foto'            => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'foto'            => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'tanggal_publish' => ['required', 'date'],
             'tanggal_selesai' => ['nullable', 'date', 'after_or_equal:tanggal_publish'],
             'status'          => ['required', 'in:draft,published'],

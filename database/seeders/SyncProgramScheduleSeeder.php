@@ -19,15 +19,15 @@ class SyncProgramScheduleSeeder extends Seeder
         // 1. Ensure 'Seni Tari' and 'Karawitan' exist
         $seniTari = ProgramKelas::firstOrCreate(
             ['nama_program' => 'Seni Tari'],
-            ['deskripsi' => 'Program Seni Tari', 'biaya' => 50000, 'status' => 'Aktif']
+            ['deskripsi' => 'Program Seni Tari', 'biaya' => 150000, 'status' => 'Aktif']
         );
-        $seniTari->update(['status' => 'Aktif']);
+        $seniTari->update(['status' => 'Aktif', 'biaya' => 150000]);
 
         $karawitan = ProgramKelas::firstOrCreate(
             ['nama_program' => 'Karawitan'],
-            ['deskripsi' => 'Program Karawitan', 'biaya' => 50000, 'status' => 'Aktif']
+            ['deskripsi' => 'Program Karawitan', 'biaya' => 150000, 'status' => 'Aktif']
         );
-        $karawitan->update(['status' => 'Aktif']);
+        $karawitan->update(['status' => 'Aktif', 'biaya' => 150000]);
 
         // 2. Handle 'Tari Klasik Sunda'
         $tariKlasik = ProgramKelas::where('nama_program', 'Tari Klasik Sunda')->first();
@@ -69,14 +69,14 @@ class SyncProgramScheduleSeeder extends Seeder
                 'jam_selesai' => '13:00:00',
                 'lokasi' => 'Sanggar Utama'
             ],
-            // Karawitan: Sabtu & Minggu (13.00 – 17.00 WIB)
+            // Karawitan: Sabtu & Minggu (13.00 – 15.00 WIB)
             [
                 'id_program' => $karawitan->id_program,
                 'id_pelatih' => $pelatih ? $pelatih->id_pelatih : null,
                 'id_sanggar' => $sanggar ? $sanggar->id_sanggar : null,
                 'hari' => 'Sabtu',
                 'jam_mulai' => '13:00:00',
-                'jam_selesai' => '17:00:00',
+                'jam_selesai' => '15:00:00',
                 'lokasi' => 'Sanggar Utama'
             ],
             [
@@ -85,7 +85,7 @@ class SyncProgramScheduleSeeder extends Seeder
                 'id_sanggar' => $sanggar ? $sanggar->id_sanggar : null,
                 'hari' => 'Minggu',
                 'jam_mulai' => '13:00:00',
-                'jam_selesai' => '17:00:00',
+                'jam_selesai' => '15:00:00',
                 'lokasi' => 'Sanggar Utama'
             ]
         ];

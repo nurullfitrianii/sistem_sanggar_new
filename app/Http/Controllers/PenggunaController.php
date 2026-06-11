@@ -28,6 +28,7 @@ class PenggunaController extends Controller
     {
         $data = $request->validate([
             'username' => ['required', 'string', 'max:50', 'unique:users,username'],
+            'email'    => ['nullable', 'email', 'max:191', 'unique:users,email'],
             'password' => ['required', 'min:6'],
             'role'     => ['required', Rule::in(['Ketua', 'Humas', 'Bendahara'])],
             'status'   => ['required', Rule::in(['Aktif', 'Nonaktif'])],
@@ -49,6 +50,7 @@ class PenggunaController extends Controller
     {
         $data = $request->validate([
             'username' => ['required', 'string', 'max:50', Rule::unique('users')->ignore($pengguna->id_user, 'id_user')],
+            'email'    => ['nullable', 'email', 'max:191', Rule::unique('users')->ignore($pengguna->id_user, 'id_user')],
             'role'     => ['required', Rule::in(['Ketua', 'Humas', 'Bendahara'])],
             'status'   => ['required', Rule::in(['Aktif', 'Nonaktif'])],
         ]);
@@ -56,6 +58,10 @@ class PenggunaController extends Controller
         if ($request->filled('password')) {
             $request->validate(['password' => ['min:6']]);
             $data['password'] = Hash::make($request->password);
+        }
+
+        if ($pengguna->email !== $request->email) {
+            $data['google_id'] = null;
         }
 
         $pengguna->update($data);

@@ -26,15 +26,17 @@ class FixProgramSchedulesSeeder extends Seeder
 
             $hariLatihan = ['Sabtu', 'Minggu'];
             
-            if (str_contains(strtolower($program->kategori), 'tari')) {
+            $isTari = str_contains(strtolower($program->kategori ?? ''), 'tari') || str_contains(strtolower($program->nama_program ?? ''), 'tari');
+            
+            if ($isTari) {
                 $jamMulai = '10:00:00';
                 $jamSelesai = '13:00:00';
                 $durasiText = '3 Jam';
             } else {
                 // Default untuk Karawitan atau lainnya
                 $jamMulai = '13:00:00';
-                $jamSelesai = '17:00:00';
-                $durasiText = '4 Jam';
+                $jamSelesai = '15:00:00';
+                $durasiText = '2 Jam';
             }
 
             // Update durasi di table program_kelas

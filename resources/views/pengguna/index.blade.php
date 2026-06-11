@@ -18,6 +18,7 @@
             <thead>
                 <tr>
                     <th>Username</th>
+                    <th>Email</th>
                     <th>Role</th>
                     <th>Status</th>
                     <th class="text-end">Aksi</th>
@@ -27,6 +28,7 @@
                 @forelse($pengguna as $item)
                     <tr>
                         <td>{{ $item->username }}</td>
+                        <td>{{ $item->email ?? '-' }}</td>
                         <td>{{ $item->role }}</td>
                         <td>
                             @if($item->status === 'Aktif')
@@ -47,7 +49,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center text-muted">Belum ada data staf.</td>
+                        <td colspan="5" class="text-center text-muted">Belum ada data staf.</td>
                     </tr>
                 @endforelse
             </tbody>

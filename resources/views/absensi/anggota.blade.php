@@ -22,11 +22,12 @@
                     <tr>
                         @php
                             $waktuHadir = \Carbon\Carbon::parse($absen->waktu_hadir);
-                            $jamMulai = $absen->jadwalLatihan ? \Carbon\Carbon::parse($absen->jadwalLatihan->jam_mulai) : null;
+                            $jadwal = $absen->getJadwal();
+                            $jamMulai = $jadwal ? \Carbon\Carbon::parse($jadwal->jam_mulai) : null;
                             $isLate = false;
 
                             if ($jamMulai && strtolower($absen->status) == 'hadir') {
-                                if ($waktuHadir->format('H:i:s') > $jamMulai->format('H:i:s')) {
+                                if ($waktuHadir->format('H:i:s') > $jamMulai->copy()->addMinutes(10)->format('H:i:s')) {
                                     $isLate = true;
                                 }
                             }
@@ -35,7 +36,7 @@
                         <td class="{{ $isLate ? 'text-danger' : '' }}">
                             {{ $waktuHadir->format('H:i') }} WIB
                         </td>
-                        <td>{{ $absen->jadwalLatihan->programKelas->nama_program ?? '-' }}</td>
+                        <td>{{ $jadwal->programKelas->nama_program ?? $absen->user->pendaftaran->programKelas->nama_program ?? '-' }}</td>
                         <td>
                             @if(strtolower($absen->status) == 'hadir')
                                 <span class="badge bg-success">Hadir</span>

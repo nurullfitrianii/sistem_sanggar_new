@@ -37,6 +37,14 @@
                             @enderror
                         </div>
                         <div class="mb-3">
+                            <label class="form-label fw-bold small">Email</label>
+                            <input type="email" name="email" value="{{ old('email', $user->email) }}" class="form-control @error('email') is-invalid @enderror" required>
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">Masukkan email yang aktif agar Anda tetap dapat masuk menggunakan Google.</div>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label fw-bold small">Role</label>
                             <input type="text" class="form-control bg-light" value="{{ $user->role }}" readonly>
                             <div class="form-text">Role akun tidak dapat diubah oleh pengguna.</div>

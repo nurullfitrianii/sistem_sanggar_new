@@ -53,19 +53,53 @@ class LaporanController extends Controller
     }
 
     /**
+     * Export Laporan Keuangan ke PDF
+     */
+    public function exportKeuanganPDF(Request $request)
+    {
+        $query = Transaction::query()->orderBy('tanggal', 'desc');
+
+        if ($request->filled('periode')) {
+            $query->where('tanggal', 'like', '%' . $request->periode . '%');
+        }
+
+        $transaksi = $query->get();
+        $totalPemasukan   = $transaksi->where('jenis', 'Masuk')->sum('nominal');
+        $totalPengeluaran = $transaksi->where('jenis', 'Keluar')->sum('nominal');
+
+        $pdf = Pdf::loadView('laporan.keuangan_pdf', compact('transaksi', 'totalPemasukan', 'totalPengeluaran'));
+        return $pdf->download('Laporan_Keuangan_Sanggar_' . ($request->periode ?? 'Semua') . '.pdf');
+    }
+
+    /**
      * Laporan Absensi
      */
     public function absensi(Request $request)
     {
-        $query = Absensi::with(['user', 'jadwalLatihan.programKelas'])->orderByDesc('waktu_hadir');
+        $query = Absensi::with(['user.pendaftaran.programKelas', 'jadwalLatihan.programKelas'])->orderByDesc('waktu_hadir');
 
         if ($request->filled('tanggal')) {
             $query->whereDate('waktu_hadir', $request->tanggal);
         }
 
-        $absensi = $query->paginate(50);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-        return view('laporan.absensi', compact('absensi'));
+        if ($request->filled('id_program')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('jadwalLatihan', function ($sub) use ($request) {
+                    $sub->where('id_program', $request->id_program);
+                })->orWhereHas('user.pendaftaran', function ($sub) use ($request) {
+                    $sub->where('id_program', $request->id_program);
+                });
+            });
+        }
+
+        $absensi = $query->paginate(20)->withQueryString();
+        $programs = \App\Models\ProgramKelas::orderBy('nama_program')->get();
+
+        return view('laporan.absensi', compact('absensi', 'programs'));
     }
 
     /**
@@ -84,15 +118,43 @@ class LaporanController extends Controller
      */
     public function exportAbsensiPDF(Request $request)
     {
-        $query = Absensi::with(['user', 'jadwalLatihan.programKelas'])->orderByDesc('waktu_hadir');
+        $query = Absensi::with(['user.pendaftaran.programKelas', 'jadwalLatihan.programKelas'])->orderByDesc('waktu_hadir');
 
         if ($request->filled('tanggal')) {
             $query->whereDate('waktu_hadir', $request->tanggal);
         }
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('id_program')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('jadwalLatihan', function ($sub) use ($request) {
+                    $sub->where('id_program', $request->id_program);
+                })->orWhereHas('user.pendaftaran', function ($sub) use ($request) {
+                    $sub->where('id_program', $request->id_program);
+                });
+            });
+        }
+
         $absensi = $query->get();
 
         $pdf = Pdf::loadView('laporan.absensi_pdf', compact('absensi'));
-        return $pdf->download('Laporan_Absensi_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('Laporan_Absensi_Ketua_' . ($request->tanggal ?? 'Semua') . '.pdf');
+    }
+
+    /**
+     * Export Laporan Absensi ke Excel
+     */
+    public function exportAbsensiExcel(Request $request)
+    {
+        $tanggal = $request->query('tanggal');
+        $status = $request->query('status');
+        $id_program = $request->query('id_program');
+        return Excel::download(
+            new \App\Exports\LaporanAbsensiExport($tanggal, $status, $id_program),
+            'Laporan_Absensi_Ketua_' . ($tanggal ?? 'Semua') . '.xlsx'
+        );
     }
 }

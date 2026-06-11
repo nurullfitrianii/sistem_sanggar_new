@@ -105,7 +105,7 @@
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 mb-0" role="alert">
                 {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert">Aksi</button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
 
@@ -125,9 +125,10 @@
                     @forelse($absensi as $index => $a)
                         @php
                             $waktuHadir = \Carbon\Carbon::parse($a->waktu_hadir)->timezone('Asia/Jakarta');
-                            $jamMulai   = $a->jadwalLatihan ? \Carbon\Carbon::parse($a->jadwalLatihan->jam_mulai) : null;
+                            $jadwal     = $a->getJadwal();
+                            $jamMulai   = $jadwal ? \Carbon\Carbon::parse($jadwal->jam_mulai) : null;
                             $isLate     = $jamMulai && strtolower($a->status) === 'hadir'
-                                          && $waktuHadir->format('H:i:s') > $jamMulai->format('H:i:s');
+                                          && $waktuHadir->format('H:i:s') > $jamMulai->copy()->addMinutes(10)->format('H:i:s');
                             $namaCalon  = $a->user->pendaftaran->nama_calon ?? ($a->user->username ?? '-');
                         @endphp
                         <tr>
@@ -145,7 +146,7 @@
                                     @endif
                                 </div>
                             </td>
-                            <td>{{ $a->jadwalLatihan->programKelas->nama_program ?? '-' }}</td>
+                            <td>{{ $jadwal->programKelas->nama_program ?? $a->user->pendaftaran->programKelas->nama_program ?? '-' }}</td>
                             <td>
                                 @if(strtolower($a->status) === 'hadir')
                                     <span class="badge rounded-pill bg-success px-3 py-2">Hadir</span>
@@ -195,7 +196,7 @@
                     <h5 class="modal-title fw-bold" id="modalAbsensiManualLabel">Absensi Manual</h5>
                     <p class="text-muted small mb-0">Untuk Siswa yang lupa membawa QR Code.</p>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">Aksi</button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('absensi.storeManual') }}" method="POST">
                 @csrf
@@ -225,9 +226,9 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Jadwal / Kelas</label>
                         <select name="id_jadwal" class="form-select" required>
-                            <option value="">-- Pilih Jadwal --</option>
+                            <option value="" data-id-program="">-- Pilih Jadwal --</option>
                             @foreach($jadwalList as $jadwal)
-                                <option value="{{ $jadwal->id_jadwal }}">
+                                <option value="{{ $jadwal->id_jadwal }}" data-id-program="{{ $jadwal->id_program }}">
                                     {{ $jadwal->programKelas->nama_program ?? '-' }}
                                     — {{ $jadwal->hari }},
                                     {{ \Carbon\Carbon::parse($jadwal->jam_mulai)->format('H:i') }}–{{ \Carbon\Carbon::parse($jadwal->jam_selesai)->format('H:i') }}
@@ -265,7 +266,9 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4 pt-2">
-                    <button type="button" class="btn px-4 btn-outline-primary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" data-bs-dismiss="modal" title="Batal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                     <button type="submit" class="btn px-4 btn-outline-success" style="border-radius: 8px">
                         Simpan Absensi
                     </button>
@@ -295,6 +298,39 @@ const inputIdUser   = document.getElementById('inputIdUser');
 const siswaSelected = document.getElementById('siswaSelected');
 const selectedLabel = document.getElementById('siswaSelectedLabel');
 const clearBtn      = document.getElementById('clearSiswa');
+
+// Elements for schedule filtering
+const selectJadwal = document.querySelector('select[name="id_jadwal"]');
+const originalJadwalOptions = selectJadwal ? Array.from(selectJadwal.options) : [];
+
+function filterJadwal(idProgram) {
+    if (!selectJadwal || originalJadwalOptions.length === 0) return;
+    
+    selectJadwal.innerHTML = '';
+    // Append default option
+    selectJadwal.appendChild(originalJadwalOptions[0]);
+    
+    // Filter options matching program ID
+    const filteredOptions = originalJadwalOptions.slice(1).filter(opt => {
+        return opt.getAttribute('data-id-program') == idProgram;
+    });
+    
+    filteredOptions.forEach(opt => selectJadwal.appendChild(opt));
+    
+    // Auto-select if there is exactly 1 option matching
+    if (filteredOptions.length === 1) {
+        selectJadwal.value = filteredOptions[0].value;
+    } else {
+        selectJadwal.value = '';
+    }
+}
+
+function resetJadwal() {
+    if (!selectJadwal || originalJadwalOptions.length === 0) return;
+    selectJadwal.innerHTML = '';
+    originalJadwalOptions.forEach(opt => selectJadwal.appendChild(opt));
+    selectJadwal.value = '';
+}
 
 searchInput.addEventListener('input', function () {
     const keyword = this.value.toLowerCase().trim();
@@ -330,6 +366,13 @@ searchInput.addEventListener('input', function () {
             selectedLabel.textContent = `${s.nama} (${s.username})`;
             siswaSelected.classList.remove('d-none');
             searchInput.classList.add('d-none');
+            
+            // Filter schedule dynamically based on student's program
+            if (s.id_program) {
+                filterJadwal(s.id_program);
+            } else {
+                resetJadwal();
+            }
         });
         dropdown.appendChild(item);
     });
@@ -343,6 +386,9 @@ clearBtn.addEventListener('click', () => {
     searchInput.classList.remove('d-none');
     searchInput.value = '';
     searchInput.focus();
+    
+    // Reset schedule select options
+    resetJadwal();
 });
 
 document.addEventListener('click', function (e) {

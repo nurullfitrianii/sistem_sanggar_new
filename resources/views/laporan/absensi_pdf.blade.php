@@ -31,11 +31,14 @@
         </thead>
         <tbody>
             @foreach($absensi as $index => $row)
+            @php
+                $jadwal = $row->getJadwal();
+            @endphp
             <tr>
                 <td>{{ $index + 1 }}</td>
-                <td>{{ $row->user->username }}</td>
-                <td>{{ $row->jadwalLatihan->programKelas->nama_program ?? '-' }}</td>
-                <td>{{ $row->jadwalLatihan->hari ?? '-' }}, {{ $row->jadwalLatihan->jam_mulai ?? '-' }}</td>
+                <td>{{ $row->user->nama_lengkap ?? $row->user->pendaftaran->nama_calon ?? $row->user->username ?? '-' }}</td>
+                <td>{{ $jadwal->programKelas->nama_program ?? $row->user->pendaftaran->programKelas->nama_program ?? '-' }}</td>
+                <td>{{ $jadwal->hari ?? '-' }}, {{ $jadwal->jam_mulai ?? '-' }}</td>
                 <td>{{ \Carbon\Carbon::parse($row->waktu_hadir)->format('d/m/Y H:i') }}</td>
                 <td>{{ $row->status }}</td>
             </tr>

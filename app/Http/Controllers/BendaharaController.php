@@ -53,12 +53,25 @@ class BendaharaController extends Controller
         $siswaList = \App\Models\User::where('role', 'Siswa')
             ->where('status', 'Aktif')
             ->with(['pendaftaran.programKelas', 'pembayaran' => function($q) {
-                $q->whereNotIn(\Illuminate\Support\Facades\DB::raw('LOWER(status)'), ['lunas', 'success', 'settlement']);
+                $q->whereNotIn(\Illuminate\Support\Facades\DB::raw('LOWER(status)'), ['lunas', 'success', 'settlement'])
+                  ->where('tipe_iuran', 'bulanan');
             }])
             ->get();
 
         $tunggakanList = [];
         $totalNominalTunggakan = 0;
+        
+        $monthsMap = [
+            'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4,
+            'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8,
+            'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
+            'january' => 1, 'february' => 2, 'march' => 3, 'may' => 5,
+            'june' => 6, 'july' => 7, 'august' => 8, 'october' => 10, 'december' => 12
+        ];
+
+        $currentYear = \Carbon\Carbon::now()->year;
+        $currentMonth = \Carbon\Carbon::now()->month;
+
         foreach ($siswaList as $siswa) {
             $unpaidPayments = $siswa->pembayaran;
             if ($unpaidPayments->isEmpty()) {
@@ -68,12 +81,39 @@ class BendaharaController extends Controller
             $unpaidMonths = [];
             $totalSiswaTunggakan = 0;
             foreach ($unpaidPayments as $payment) {
+                // Parse format "Bulan Tahun" (contoh: "Juni 2026")
+                $cleanStr = strtolower(trim($payment->bulan));
+                $parts = explode(' ', $cleanStr);
+                if (count($parts) >= 2) {
+                    $monthName = $parts[0];
+                    $year = (int)$parts[1];
+                    if (isset($monthsMap[$monthName])) {
+                        $monthNum = $monthsMap[$monthName];
+                        
+                        // Periksa apakah bulan tagihan sudah lewat (sebelum bulan berjalan saat ini)
+                        $isPassed = false;
+                        if ($year < $currentYear) {
+                            $isPassed = true;
+                        } elseif ($year === $currentYear && $monthNum < $currentMonth) {
+                            $isPassed = true;
+                        }
+
+                        if (!$isPassed) {
+                            continue; // Skip jika bulan berjalan atau bulan depan (belum dianggap tunggakan)
+                        }
+                    }
+                }
+
                 $unpaidMonths[] = [
                     'bulan' => $payment->bulan,
                     'jumlah' => $payment->jumlah,
                     'status' => $payment->status
                 ];
                 $totalSiswaTunggakan += $payment->jumlah;
+            }
+
+            if (empty($unpaidMonths)) {
+                continue;
             }
 
             $tunggakanList[] = (object)[
@@ -125,38 +165,77 @@ class BendaharaController extends Controller
             ->orderBy('id_pembayaran', 'desc')
             ->get();
 
-        $iuranMingguanPending = TransaksiIuran::with('user')
-            ->where('status', 'valid')
-            ->where('tipe_iuran', 'mingguan')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // 1. Iuran Mingguan (Gabungan TransaksiIuran + Pembayaran Lunas)
+        $iuranMingguanTransaksi = collect(
+            TransaksiIuran::with('user')
+                ->where('status', 'valid')
+                ->where('tipe_iuran', 'mingguan')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(fn($i) => (object)[
+                    'user'         => $i->user,
+                    'tipe_iuran'   => 'mingguan',
+                    'jumlah_bayar' => $i->jumlah_bayar,
+                    'created_at'   => $i->created_at,
+                ])
+                ->all()
+        );
 
-        // Gabungkan iuran bulanan dari TransaksiIuran + Pembayaran (sinkron dengan Data Iuran)
-        $iuranBulananTransaksi = TransaksiIuran::with('user')
-            ->where('status', 'valid')
-            ->where('tipe_iuran', 'bulanan')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $iuranMingguanPembayaran = collect(
+            Pembayaran::with('user')
+                ->where('status', 'Lunas')
+                ->where('tipe_iuran', 'mingguan')
+                ->whereNotNull('tanggal_bayar')
+                ->orderBy('tanggal_bayar', 'desc')
+                ->get()
+                ->map(fn($p) => (object)[
+                    'user'         => $p->user,
+                    'tipe_iuran'   => 'mingguan',
+                    'jumlah_bayar' => $p->jumlah,
+                    'created_at'   => $p->tanggal_bayar,
+                ])
+                ->all()
+        );
 
-        $iuranBulananPembayaran = Pembayaran::with('user')
-            ->where('status', 'Lunas')
-            ->whereNotNull('tanggal_bayar')
-            ->orderBy('tanggal_bayar', 'desc')
-            ->get();
+        $iuranMingguanPending = $iuranMingguanTransaksi
+            ->merge($iuranMingguanPembayaran)
+            ->sortByDesc('created_at')
+            ->values();
 
-        $iuranBulananPending = collect()
-            ->merge($iuranBulananTransaksi->map(fn($i) => (object)[
-                'user'         => $i->user,
-                'tipe_iuran'   => $i->tipe_iuran,
-                'jumlah_bayar' => $i->jumlah_bayar,
-                'created_at'   => $i->created_at,
-            ]))
-            ->merge($iuranBulananPembayaran->map(fn($p) => (object)[
-                'user'         => $p->user,
-                'tipe_iuran'   => 'bulanan',
-                'jumlah_bayar' => $p->jumlah,
-                'created_at'   => $p->tanggal_bayar,
-            ]))
+        // 2. Iuran Bulanan (Gabungan TransaksiIuran + Pembayaran Lunas)
+        $iuranBulananTransaksi = collect(
+            TransaksiIuran::with('user')
+                ->where('status', 'valid')
+                ->where('tipe_iuran', 'bulanan')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(fn($i) => (object)[
+                    'user'         => $i->user,
+                    'tipe_iuran'   => 'bulanan',
+                    'jumlah_bayar' => $i->jumlah_bayar,
+                    'created_at'   => $i->created_at,
+                ])
+                ->all()
+        );
+
+        $iuranBulananPembayaran = collect(
+            Pembayaran::with('user')
+                ->where('status', 'Lunas')
+                ->where('tipe_iuran', 'bulanan')
+                ->whereNotNull('tanggal_bayar')
+                ->orderBy('tanggal_bayar', 'desc')
+                ->get()
+                ->map(fn($p) => (object)[
+                    'user'         => $p->user,
+                    'tipe_iuran'   => 'bulanan',
+                    'jumlah_bayar' => $p->jumlah,
+                    'created_at'   => $p->tanggal_bayar,
+                ])
+                ->all()
+        );
+
+        $iuranBulananPending = $iuranBulananTransaksi
+            ->merge($iuranBulananPembayaran)
             ->sortByDesc('created_at')
             ->values();
 
@@ -169,7 +248,7 @@ class BendaharaController extends Controller
             'pembayaranPending'    => $pembayaranPending,
             'iuranMingguanPending' => $iuranMingguanPending,
             'iuranBulananPending'  => $iuranBulananPending,
-            'totalPending'         => $pembayaranPending->count() + TransaksiIuran::where('status', 'pending')->count(),
+            'totalPending'         => $pembayaranPending->count() + TransaksiIuran::where('status', 'pending')->count() + Pendaftaran::whereIn('status_pembayaran', ['pending', 'belum lunas'])->where('status', 'Menunggu')->count(),
             'tunggakanList'         => $tunggakanList,
             'totalNominalTunggakan' => $totalNominalTunggakan,
         ]);
@@ -197,10 +276,9 @@ class BendaharaController extends Controller
             ]);
         }
 
-        // TAMBAHAN: Ambil dari tabel Pendaftaran (untuk yang baru daftar: pending transfer)
+        // TAMBAHAN: Ambil dari tabel Pendaftaran (untuk yang baru daftar: pending transfer atau cash belum lunas)
         $pendaftaranBaru = Pendaftaran::with('programKelas')
-            ->where('status_pembayaran', 'pending')
-            ->where('status', 'Menunggu')
+            ->whereIn('status_pembayaran', ['pending', 'belum lunas'])
             ->get();
 
         foreach ($pendaftaranBaru as $pt) {
@@ -211,7 +289,7 @@ class BendaharaController extends Controller
                 'user'               => (object)['username' => $pt->nama_calon, 'id_user' => $pt->id_user ?? '-'],
                 'jumlah'             => $pt->programKelas->biaya ?? 0,
                 'metode'             => $pt->metode_pembayaran ?? 'N/A',
-                'bukti_bayar'        => null,
+                'bukti_bayar'        => $pt->bukti_bayar,
                 'tanggal'            => $pt->tanggal_daftar ?? now(),
                 'keterangan_periode' => 'Pendaftaran'
             ]);
@@ -276,7 +354,21 @@ class BendaharaController extends Controller
                     ]);
                 }
 
-                return redirect()->back()->with('success', 'Pembayaran tunai pendaftaran berhasil diverifikasi.');
+                // Kirim email notifikasi pembayaran berhasil
+                if ($pendaftaran->email) {
+                    try {
+                        Mail::to($pendaftaran->email)->send(new PembayaranBerhasil(
+                            namaCalon  : $pendaftaran->nama_calon,
+                            namaProgram: $pendaftaran->programKelas->nama_program ?? 'Sanggar',
+                            jumlah     : 'Rp ' . number_format($nominal, 0, ',', '.'),
+                            tanggal    : now()->format('d M Y')
+                        ));
+                    } catch (\Exception $e) {
+                        \Log::error('Gagal kirim email pembayaran pendaftaran: ' . $e->getMessage());
+                    }
+                }
+
+                return redirect()->back()->with('success', 'Pembayaran berhasil');
             } else {
                 $pendaftaran->update(['status_pembayaran' => 'failed']);
                 return redirect()->back()->with('error', 'Pembayaran pendaftaran ditolak.');
@@ -323,7 +415,7 @@ class BendaharaController extends Controller
                 }
             }
 
-            return redirect()->back()->with('success', 'Pembayaran berhasil dikonfirmasi dan email notifikasi telah dikirim.');
+            return redirect()->back()->with('success', 'Pembayaran berhasil');
         } else {
             $pembayaran->update(['status' => 'Ditolak']);
             return redirect()->back()->with('error', 'Pembayaran telah ditolak.');
@@ -336,12 +428,44 @@ class BendaharaController extends Controller
      */
     public function indexIuran()
     {
-        $iuranMingguanValid = TransaksiIuran::with('user')
-            ->where('status', 'valid')
-            ->where('tipe_iuran', 'mingguan')
-            ->orderBy('tanggal_bayar', 'desc')
-            ->get();
+        // 1. Iuran Mingguan
+        $iuranMingguanTransaksi = collect(
+            TransaksiIuran::with('user')
+                ->where('status', 'valid')
+                ->where('tipe_iuran', 'mingguan')
+                ->orderBy('tanggal_bayar', 'desc')
+                ->get()
+                ->map(fn($i) => (object)[
+                    'user'              => $i->user,
+                    'metode_pembayaran' => $i->metode_pembayaran,
+                    'tanggal_bayar'     => $i->tanggal_bayar,
+                    'jumlah_bayar'      => $i->jumlah_bayar,
+                ])
+                ->all()
+        );
 
+        $iuranMingguanPembayaran = collect(
+            Pembayaran::with('user')
+                ->where('status', 'Lunas')
+                ->where('tipe_iuran', 'mingguan')
+                ->whereNotNull('tanggal_bayar')
+                ->orderBy('tanggal_bayar', 'desc')
+                ->get()
+                ->map(fn($p) => (object)[
+                    'user'              => $p->user,
+                    'metode_pembayaran' => $p->metode_pembayaran ?? 'N/A',
+                    'tanggal_bayar'     => $p->tanggal_bayar,
+                    'jumlah_bayar'      => $p->jumlah,
+                ])
+                ->all()
+        );
+
+        $iuranMingguanValid = $iuranMingguanTransaksi
+            ->merge($iuranMingguanPembayaran)
+            ->sortByDesc('tanggal_bayar')
+            ->values();
+
+        // 2. Iuran Bulanan
         $iuranBulananTransaksi = collect(
             TransaksiIuran::with('user')
                 ->where('status', 'valid')
@@ -360,6 +484,7 @@ class BendaharaController extends Controller
         $iuranBulananPembayaran = collect(
             Pembayaran::with('user')
                 ->where('status', 'Lunas')
+                ->where('tipe_iuran', 'bulanan')
                 ->whereNotNull('tanggal_bayar')
                 ->orderBy('tanggal_bayar', 'desc')
                 ->get()
@@ -427,7 +552,7 @@ class BendaharaController extends Controller
                 }
             }
 
-            return redirect()->back()->with('success', 'Iuran divalidasi, tersinkronisasi dengan Laporan Keuangan, dan email notifikasi telah dikirim.');
+            return redirect()->back()->with('success', 'Pembayaran berhasil');
         } else {
             $iuran->update(['status' => 'ditolak']);
             return redirect()->back()->with('error', 'Iuran ditolak.');
@@ -453,7 +578,7 @@ class BendaharaController extends Controller
             
             $statusPendaftaran = strtolower($pendaftaran->status_pembayaran ?? '');
             // Siswa yang berstatus Aktif pendaftaran awalnya pasti sudah lunas
-            $isPaid = in_array($statusPendaftaran, ['success', 'settlement', 'lunas']) || $siswa->status === 'Aktif';
+            $isPaid = in_array($statusPendaftaran, ['success', 'settlement', 'lunas']);
 
             if (!$regExists) {
                 $statusReg = $isPaid ? 'Lunas' : 'Belum Bayar';

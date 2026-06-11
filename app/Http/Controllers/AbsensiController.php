@@ -59,6 +59,12 @@ public function scan(Request $request)
             return response()->json(['status' => 'error', 'message' => 'Siswa tidak ditemukan di data pendaftaran.']);
         }
 
+        // 3. CEK USER ASLI (Moved up to check existing attendances)
+        $userAsli = \App\Models\User::where('username', $pendaftaran->username)->first();
+        if (!$userAsli) {
+            return response()->json(['status' => 'error', 'message' => 'Akun User tidak ditemukan untuk username tersebut.']);
+        }
+
         // 2. CARI JADWAL AKTIF (Flexible Lookup)
         $jadwalList = \App\Models\JadwalLatihan::where('id_program', $pendaftaran->id_program)->get();
 
@@ -71,26 +77,36 @@ public function scan(Request $request)
                 'id_program' => $pendaftaran->id_program,
                 'hari' => in_array($hariIni, ['Sabtu', 'Minggu']) ? $hariIni : 'Sabtu', // Tetap fleksibel Sabtu/Minggu
                 'jam_mulai' => $isSeniTari ? '10:00:00' : '13:00:00',
-                'jam_selesai' => $isSeniTari ? '13:00:00' : '17:00:00',
+                'jam_selesai' => $isSeniTari ? '13:00:00' : '15:00:00',
                 'lokasi' => 'Sanggar Utama'
             ]);
         } else {
-            // Sort in PHP: Prioritize current day, then closest time.
-            $jadwalAktif = $jadwalList->sortBy(function($jadwal) use ($hariIni, $currentTime) {
-                // Priority 0 if it's today, 1 if other day
-                $isToday = (strtolower($jadwal->hari) === strtolower($hariIni)) ? 0 : 1;
+            // Cek jadwal apa saja yang sudah di-absen hari ini oleh user tersebut
+            $alreadyScannedJadwalIds = \App\Models\Absensi::where('id_user', $userAsli->id_user)
+                ->whereDate('waktu_hadir', $todayDate)
+                ->pluck('id_jadwal')
+                ->toArray();
 
-                // Time difference
-                $timeDiff = abs(strtotime($jadwal->jam_mulai ?? '00:00:00') - strtotime($currentTime));
+            // Filter keluar jadwal yang sudah di-absen hari ini agar QR code bisa digunakan untuk jadwal berikutnya di hari yang sama (misal testing)
+            $availableJadwalList = $jadwalList->reject(function($jadwal) use ($alreadyScannedJadwalIds) {
+                return in_array($jadwal->id_jadwal, $alreadyScannedJadwalIds);
+            });
 
-                return sprintf("%d_%010d", $isToday, $timeDiff);
-            })->first();
-        }
-
-        // 3. CEK ABSENSI GANDA
-        $userAsli = \App\Models\User::where('username', $pendaftaran->username)->first();
-        if (!$userAsli) {
-            return response()->json(['status' => 'error', 'message' => 'Akun User tidak ditemukan untuk username tersebut.']);
+            if ($availableJadwalList->isNotEmpty()) {
+                // Urutkan jadwal yang tersisa: utamakan hari ini, lalu waktu terdekat
+                $jadwalAktif = $availableJadwalList->sortBy(function($jadwal) use ($hariIni, $currentTime) {
+                    $isToday = (strtolower($jadwal->hari) === strtolower($hariIni)) ? 0 : 1;
+                    $timeDiff = abs(strtotime($jadwal->jam_mulai ?? '00:00:00') - strtotime($currentTime));
+                    return sprintf("%d_%010d", $isToday, $timeDiff);
+                })->first();
+            } else {
+                // Jika semua jadwal sudah di-absen hari ini, ambil salah satu agar nanti terblokir oleh cek absensi ganda
+                $jadwalAktif = $jadwalList->sortBy(function($jadwal) use ($hariIni, $currentTime) {
+                    $isToday = (strtolower($jadwal->hari) === strtolower($hariIni)) ? 0 : 1;
+                    $timeDiff = abs(strtotime($jadwal->jam_mulai ?? '00:00:00') - strtotime($currentTime));
+                    return sprintf("%d_%010d", $isToday, $timeDiff);
+                })->first();
+            }
         }
 
         $exists = \App\Models\Absensi::where('id_jadwal', $jadwalAktif->id_jadwal)
@@ -99,7 +115,7 @@ public function scan(Request $request)
                          ->first();
 
         if ($exists) {
-            return response()->json(['status' => 'warning', 'message' => 'Siswa sudah absen hari ini.']);
+            return response()->json(['status' => 'warning', 'message' => 'Siswa sudah absen untuk sesi jadwal ini hari ini.']);
         }
 
         // 4. EKSEKUSI SIMPAN (Fix Attendance Saving)
