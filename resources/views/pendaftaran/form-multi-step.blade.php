@@ -194,7 +194,7 @@
                         <div id="qris-payment-container" class="mt-6 p-6 bg-orange-50/50 rounded-2xl border border-orange-100 text-left">
                             <div class="text-center mb-4">
                                 <p class="text-xs text-orange-600 font-bold uppercase mb-2">Scan QRIS di Bawah Ini</p>
-                                <img src="{{ asset('img/qris2.jpeg') }}" alt="QRIS Sanggar" class="w-48 mx-auto rounded-xl shadow-md border border-gray-200">
+                                <img src="{{ asset('img/qris.jpeg') }}" alt="QRIS Sanggar" class="w-48 mx-auto rounded-xl shadow-md border border-gray-200">
                                 <p class="text-xs text-gray-500 mt-2">Pendaftaran: <strong class="text-gray-900">{{ $program->nama_program }}</strong></p>
                                 <p class="text-sm font-extrabold text-[#994D1C] mt-1">Total: Rp {{ number_format($program->biaya, 0, ',', '.') }}</p>
                             </div>
@@ -328,7 +328,7 @@
             formData.append('bukti_bayar', fileInput.files[0]);
         }
 
-        fetch("{{ route('pendaftaran.store') }}", {
+        fetch("{{ route('pendaftaran.store', [], false) }}", {
             method: "POST",
             headers: {
                 "X-CSRF-TOKEN": "{{ csrf_token() }}",

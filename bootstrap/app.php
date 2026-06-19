@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust all proxies (Cloudflare)
+        $middleware->trustProxies(at: '*');
+
         // 1. Tambahkan pengecualian CSRF untuk Midtrans Callback
         $middleware->validateCsrfTokens(except: [
             'midtrans/callback',

@@ -326,15 +326,10 @@ class BendaharaController extends Controller
         if ($type === 'pendaftaran_awal') {
             $pendaftaran = Pendaftaran::with('programKelas')->findOrFail($id);
             if ($aksi == 'terima') {
+                // Hanya update status pembayaran ke success, biarkan status pendaftaran tetap 'Menunggu' (disetujui oleh Humas)
                 $pendaftaran->update([
-                    'status' => 'Aktif',
                     'status_pembayaran' => 'success'
                 ]);
-
-                // Aktifkan User terkait
-                if ($pendaftaran->email) {
-                    \App\Models\User::where('email', $pendaftaran->email)->update(['status' => 'Aktif']);
-                }
 
                 // Record Transaction
                 $keterangan = 'Pendaftaran Siswa: ' . $pendaftaran->nama_calon . ' (' . ($pendaftaran->programKelas->nama_program ?? 'Program') . ')';
@@ -368,7 +363,7 @@ class BendaharaController extends Controller
                     }
                 }
 
-                return redirect()->back()->with('success', 'Pembayaran berhasil');
+                return redirect()->back()->with('success', 'Pembayaran pendaftaran berhasil diverifikasi. Pendaftaran ini sekarang menunggu persetujuan dari Humas.');
             } else {
                 $pendaftaran->update(['status_pembayaran' => 'failed']);
                 return redirect()->back()->with('error', 'Pembayaran pendaftaran ditolak.');

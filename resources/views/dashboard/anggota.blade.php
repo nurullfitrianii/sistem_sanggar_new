@@ -269,7 +269,7 @@
                 <!-- QRIS Image Container -->
                 <div class="mb-3 text-center p-3 bg-light rounded-3 border" id="qris_image_container" style="display: none;">
                     <p class="text-xs text-uppercase fw-bold text-success mb-2">Scan QRIS Di Bawah Ini</p>
-                    <img src="{{ asset('img/qris2.jpeg') }}" alt="QRIS Sanggar" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-width: 180px;">
+                    <img src="{{ asset('img/qris.jpeg') }}" alt="QRIS Sanggar" class="img-fluid rounded-3 border shadow-sm mb-2" style="max-width: 180px;">
                     <p class="text-muted mb-0" style="font-size: 0.75rem;">Silakan scan QRIS dan lakukan transfer, kemudian unggah bukti pembayaran di bawah ini.</p>
                 </div>
 

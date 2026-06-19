@@ -167,7 +167,7 @@
     resultEl.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div> Memproses...';
     resultEl.className = 'mt-4 p-3 rounded-4 text-center result-pending';
 
-    axios.post('{{ route('absensi.scan') }}', {
+    axios.post('{{ route('absensi.scan', [], false) }}', {
         id_user: decodedText,
         _token: '{{ csrf_token() }}'
     })

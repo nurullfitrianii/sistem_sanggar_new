@@ -2,8 +2,8 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: May 12, 2026 at 04:38 AM
+-- Host: 127.0.0.1:3307
+-- Generation Time: Jun 11, 2026 at 07:37 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -33,18 +33,10 @@ CREATE TABLE `absensi` (
   `id_jadwal` int(11) DEFAULT NULL,
   `waktu_hadir` datetime NOT NULL DEFAULT current_timestamp(),
   `status` varchar(20) NOT NULL DEFAULT 'Hadir',
+  `keterangan` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `absensi`
---
-
-INSERT INTO `absensi` (`id_absensi`, `id_user`, `id_jadwal`, `waktu_hadir`, `status`, `created_at`, `updated_at`) VALUES
-(1, 12, 1, '2026-05-09 04:56:11', 'Hadir', '2026-05-08 21:56:11', '2026-05-08 21:56:11'),
-(2, 29, 2, '2026-05-11 01:37:10', 'Hadir', NULL, NULL),
-(3, 32, 3, '2026-05-11 10:58:18', 'Hadir', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -57,7 +49,8 @@ CREATE TABLE `galeri` (
   `id_sanggar` int(11) DEFAULT NULL,
   `judul` varchar(100) DEFAULT NULL,
   `foto` varchar(255) DEFAULT NULL,
-  `keterangan` text DEFAULT NULL
+  `keterangan` text DEFAULT NULL,
+  `tanggal` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -94,17 +87,25 @@ CREATE TABLE `jadwal_latihan` (
   `hari` varchar(20) DEFAULT NULL,
   `jam_mulai` time DEFAULT NULL,
   `jam_selesai` time DEFAULT NULL,
-  `lokasi` varchar(100) DEFAULT NULL
+  `lokasi` varchar(100) DEFAULT NULL,
+  `materi` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jadwal_latihan`
 --
 
-INSERT INTO `jadwal_latihan` (`id_jadwal`, `id_pelatih`, `id_program`, `id_sanggar`, `hari`, `jam_mulai`, `jam_selesai`, `lokasi`) VALUES
-(1, 8, 1, 1, 'Sabtu', '10:00:00', '13:00:00', 'Sanggar Utama'),
-(2, 9, 4, 1, 'Sabtu', '13:00:00', '17:00:00', 'Sanggar Utama'),
-(3, 9, 2, 1, 'Sabtu', '10:00:00', '13:00:00', 'Sanggar Utama');
+INSERT INTO `jadwal_latihan` (`id_jadwal`, `id_pelatih`, `id_program`, `id_sanggar`, `hari`, `jam_mulai`, `jam_selesai`, `lokasi`, `materi`) VALUES
+(1, 8, 1, 1, 'Sabtu', '10:00:00', '13:00:00', 'Sanggar Utama', NULL),
+(2, 9, 3, 1, 'Sabtu', '13:00:00', '15:00:00', 'Sanggar Utama', NULL),
+(3, 9, 2, 1, 'Sabtu', '10:00:00', '13:00:00', 'Sanggar Utama', NULL),
+(4, 6, 1, 1, 'Minggu', '10:00:00', '13:00:00', 'Sanggar Goong Prasasti', 'Latihan Rutin'),
+(5, 6, 2, 1, 'Minggu', '10:00:00', '13:00:00', 'Sanggar Goong Prasasti', 'Latihan Rutin'),
+(6, 6, 3, 1, 'Minggu', '13:00:00', '15:00:00', 'Sanggar Goong Prasasti', 'Latihan Rutin'),
+(7, 6, 5, 1, 'Sabtu', '13:00:00', '15:00:00', 'Sanggar Goong Prasasti', 'Latihan Rutin'),
+(8, 6, 5, 1, 'Minggu', '13:00:00', '15:00:00', 'Sanggar Goong Prasasti', 'Latihan Rutin'),
+(9, 6, 6, 1, 'Sabtu', '13:00:00', '15:00:00', 'Sanggar Goong Prasasti', 'Latihan Rutin'),
+(10, 6, 6, 1, 'Minggu', '13:00:00', '15:00:00', 'Sanggar Goong Prasasti', 'Latihan Rutin');
 
 -- --------------------------------------------------------
 
@@ -175,7 +176,18 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (14, '2026_05_10_000001_add_tanggal_bayar_to_transaksi_iurans_table', 12),
 (15, '2026_05_11_000001_add_tipe_iuran_metode_to_pembayaran_table', 13),
 (16, '2026_05_12_084251_add_tanggal_selesai_to_informasi_berita_table', 14),
-(17, '2026_05_12_084633_add_durasi_and_sesi_to_program_kelas_table', 15);
+(17, '2026_05_12_084633_add_durasi_and_sesi_to_program_kelas_table', 15),
+(18, '2026_05_12_104000_add_materi_to_jadwal_latihan_table', 16),
+(19, '2026_05_12_104500_add_pendaftaran_dates_to_sanggar_table', 16),
+(20, '2026_05_12_105251_add_materi_to_jadwal_latihan_table --table=jadwal_latihan', 16),
+(21, '2026_05_14_085000_add_payment_columns_to_pendaftaran_table', 16),
+(22, '2026_06_08_000000_update_programs_and_schedules', 16),
+(23, '2026_06_08_000001_rename_kacapi_suling_program', 16),
+(24, '2026_06_08_000002_rename_kecapi_suling_to_kerawitan', 16),
+(25, '2026_06_09_000000_fix_pendaftaran_username_collation', 16),
+(26, '2026_06_09_000001_add_keterangan_to_absensi_table', 16),
+(27, '2026_06_10_000000_add_bukti_bayar_to_pendaftaran_table', 16),
+(28, '2026_06_11_111644_add_tanggal_to_galeri_table', 16);
 
 -- --------------------------------------------------------
 
@@ -240,18 +252,6 @@ CREATE TABLE `pembayaran` (
   `bukti_bayar` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `pembayaran`
---
-
-INSERT INTO `pembayaran` (`id_pembayaran`, `id_user`, `tanggal_bayar`, `bulan`, `jumlah`, `tipe_iuran`, `metode_pembayaran`, `status`, `bukti_bayar`) VALUES
-(2, 12, '2026-05-01', 'May 2026', 150000.00, NULL, NULL, 'Belum Bayar', 'bukti_transfer/ghMkHy2gjY1EqIX3UCgbtfIueti7PVIXvsDNddLl.jpg'),
-(3, 27, '2026-05-12', 'May 2026', 175000.00, 'bulanan', 'transfer', 'Lunas', NULL),
-(5, 28, '2026-05-10', 'May 2026', 175000.00, 'bulanan', 'transfer', 'Lunas', NULL),
-(6, 29, '2026-05-11', 'May 2026', 175000.00, 'bulanan', 'transfer', 'Lunas', NULL),
-(7, 32, NULL, 'May 2026', 150000.00, 'bulanan', 'transfer', 'Menunggu Verifikasi', NULL),
-(9, 33, '2026-05-11', 'May 2026', 15000.00, 'mingguan', 'tunai', 'Lunas', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -260,37 +260,24 @@ INSERT INTO `pembayaran` (`id_pembayaran`, `id_user`, `tanggal_bayar`, `bulan`, 
 
 CREATE TABLE `pendaftaran` (
   `id_pendaftaran` bigint(20) UNSIGNED NOT NULL,
+  `id_user` int(11) DEFAULT NULL,
   `id_program` bigint(20) UNSIGNED DEFAULT NULL,
-  `username` varchar(191) DEFAULT NULL,
+  `username` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `email` varchar(191) DEFAULT NULL,
   `nama_calon` varchar(191) NOT NULL,
   `tanggal_lahir` date DEFAULT NULL,
   `tanggal_daftar` date NOT NULL,
   `no_hp` varchar(20) NOT NULL,
   `alamat` text NOT NULL,
+  `metode_pembayaran` varchar(191) DEFAULT NULL,
   `dokumen` varchar(191) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'Menunggu',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `snap_token` varchar(255) DEFAULT NULL,
-  `status_pembayaran` varchar(20) DEFAULT 'pending'
+  `status_pembayaran` varchar(20) DEFAULT 'pending',
+  `bukti_bayar` varchar(191) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `pendaftaran`
---
-
-INSERT INTO `pendaftaran` (`id_pendaftaran`, `id_program`, `username`, `email`, `nama_calon`, `tanggal_lahir`, `tanggal_daftar`, `no_hp`, `alamat`, `dokumen`, `status`, `created_at`, `updated_at`, `snap_token`, `status_pembayaran`) VALUES
-(1, 1, 'nurulfitriani', 'nurul@gmail.com', 'Nurul Fitriani', '2018-04-11', '2026-05-01', '0987654', 'fghjkl', 'pendaftaran/TfJ0lS9G5ETpGHLnfmTTsjtxGHBoxT2uCDXc5Anh.png', 'Disetujui', NULL, NULL, NULL, 'pending'),
-(2, 1, 'anandamarcella', 'ananda@gmail.com', 'Ananda Marcella', '2014-06-10', '2026-05-09', '0987654', 'gfd', NULL, 'Disetujui', NULL, NULL, NULL, 'pending'),
-(15, 4, 'naelahayati', 'naela@gmail.com', 'Naela hayati', '2017-04-11', '2026-05-10', '09876543', 'lkjhg', NULL, 'Disetujui', NULL, NULL, NULL, 'pending'),
-(16, 6, 'vira', 'vira@gmail.com', 'Vira', '2018-02-12', '2026-05-10', '0987654', '0987654', NULL, 'Ditolak', NULL, NULL, NULL, 'pending'),
-(17, 5, 'vira', 'vira@gmail.com', 'Vira', '2016-03-12', '2026-05-10', '0987654', 'lkjhgf', NULL, 'Disetujui', NULL, NULL, NULL, 'pending'),
-(18, 4, 'miaafriyanti', 'mmauddyy@gmail.com', 'mia afriyanti', '2017-04-11', '2026-05-11', '09876543', 'jhgf', NULL, 'Disetujui', NULL, NULL, NULL, 'pending'),
-(19, 4, 'ningning', 'ningning@gmail.com', 'ningning', '2014-12-04', '2026-05-11', '09876543', 'hg', NULL, 'Ditolak', NULL, NULL, NULL, 'pending'),
-(20, 4, 'karinaaespa', 'karina@gmail.com', 'karina aespa', '2018-04-11', '2026-05-11', '09876543', 'oiugf', NULL, 'Ditolak', NULL, NULL, NULL, 'pending'),
-(21, 2, 'karina', 'karinaaespa@gmail.com', 'karina', '2018-04-11', '2026-05-11', '0987654', 'oiuhgv', NULL, 'Aktif', NULL, NULL, NULL, 'pending'),
-(22, 1, 'dealya', 'dealya@gmail.com', 'dealya', '2017-12-13', '2026-05-11', '0987654', 'hgfd', NULL, 'Aktif', NULL, NULL, NULL, 'pending');
 
 -- --------------------------------------------------------
 
@@ -333,10 +320,9 @@ CREATE TABLE `program_kelas` (
 INSERT INTO `program_kelas` (`id_program`, `nama_program`, `slug`, `kategori`, `deskripsi`, `foto`, `biaya`, `durasi`, `jumlah_sesi`, `status`) VALUES
 (1, 'Tari Tradisional Jaipong', 'tari-tradisional-jaipong', 'Seni Tari', 'Kelas tari jaipong untuk pemula hingga mahir', 'programs/tari tradisional.JPG', 150000.00, NULL, NULL, 'Aktif'),
 (2, 'Tari Klasik Sunda', 'tari-klasik-sunda', 'Seni Tari', 'Kelas tari klasik sunda untuk semua usia', 'programs/seni tari.jpg', 150000.00, NULL, NULL, 'Aktif'),
-(3, 'Karawitan - Gamelan & Degung', 'karawitan-gamelan-degung', 'Seni Karawitan', 'Belajar memainkan gamelan dan degung Sunda', 'programs/gamelan.jpg', 200000.00, NULL, NULL, 'Aktif'),
-(4, 'Karawitan - Kendang', 'karawitan-kendang', 'Seni Karawitan', 'Kelas kendang untuk semua level', 'programs/kendang.jpg', 175000.00, NULL, NULL, 'Aktif'),
+(3, 'Karawitan (Kendang, Gamelan)', 'karawitan-kendang-gamelan', 'Seni Karawitan', 'Belajar memainkan kendang dan gamelan Sunda secara terpadu', 'programs/gamelan.jpg', 150000.00, '2 Jam', NULL, 'Aktif'),
 (5, 'Karawitan - Vokal Kawih', 'karawitan-vokal-kawih', 'Seni Karawitan', 'Belajar vokal seni kawih Sunda', 'programs/vokal kawih.JPG', 150000.00, NULL, NULL, 'Aktif'),
-(6, 'Karawitan - Kacapi', 'karawitan-kacapi', 'Seni Karawitan', 'Belajar memainkan kacapi tradisional Sunda', 'programs/kecapi.png', 175000.00, NULL, NULL, 'Aktif');
+(6, 'Kerawitan (Kecapi, Suling)', 'kerawitan-kecapi-suling', 'Seni Karawitan', 'Belajar memainkan kecapi dan suling tradisional Sunda', 'programs/suling.jpg', 150000.00, '2 Jam', NULL, 'Aktif');
 
 -- --------------------------------------------------------
 
@@ -351,15 +337,17 @@ CREATE TABLE `sanggar` (
   `email` varchar(100) DEFAULT NULL,
   `no_hp` varchar(20) DEFAULT NULL,
   `visi` text DEFAULT NULL,
-  `misi` text DEFAULT NULL
+  `misi` text DEFAULT NULL,
+  `pendaftaran_dibuka` date DEFAULT NULL,
+  `pendaftaran_ditutup` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `sanggar`
 --
 
-INSERT INTO `sanggar` (`id_sanggar`, `nama_sanggar`, `alamat`, `email`, `no_hp`, `visi`, `misi`) VALUES
-(1, 'Sanggar Goong Prasasti', 'Bandung', NULL, NULL, NULL, NULL);
+INSERT INTO `sanggar` (`id_sanggar`, `nama_sanggar`, `alamat`, `email`, `no_hp`, `visi`, `misi`, `pendaftaran_dibuka`, `pendaftaran_ditutup`) VALUES
+(1, 'Sanggar Goong Prasasti', 'Bandung', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -394,20 +382,6 @@ CREATE TABLE `transactions` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `transactions`
---
-
-INSERT INTO `transactions` (`id_transaction`, `tanggal`, `jenis`, `nominal`, `keterangan`, `id_user_siswa`, `id_user`, `created_at`, `updated_at`) VALUES
-(1, '2026-05-10', 'Masuk', 50000.00, 'Iuran Mingguan: naelahayati', NULL, 7, '2026-05-10 06:09:29', '2026-05-10 06:09:29'),
-(2, '2026-05-10', 'Masuk', 175000.00, 'Iuran Bulanan: naelahayati (May 2026)', NULL, 3, '2026-05-10 16:43:52', '2026-05-10 16:43:52'),
-(3, '2026-05-10', 'Masuk', 175000.00, 'Pembayaran Bulanan: vira (May 2026)', NULL, 7, '2026-05-10 16:54:03', '2026-05-10 16:54:03'),
-(4, '2026-05-11', 'Masuk', 175000.00, 'Iuran Bulanan: miaafriyanti (May 2026)', NULL, 29, '2026-05-10 18:59:23', '2026-05-10 18:59:23'),
-(5, '2026-05-11', 'Masuk', 150000.00, 'Pendaftaran Siswa: dealya (Tari Tradisional Jaipong)', NULL, 33, '2026-05-11 11:33:53', '2026-05-11 11:33:53'),
-(6, '2026-05-11', 'Masuk', 15000.00, 'Pembayaran Bulanan: dealya (May 2026)', NULL, 33, '2026-05-11 12:58:23', '2026-05-11 12:58:23'),
-(7, '2026-05-11', 'Keluar', 100000.00, 'beli baju', NULL, 7, '2026-05-11 13:52:20', '2026-05-11 13:52:20'),
-(8, '2026-05-12', 'Masuk', 175000.00, 'Pembayaran Bulanan: naelahayati (May 2026)', NULL, 27, '2026-05-12 01:50:44', '2026-05-12 01:50:44');
-
 -- --------------------------------------------------------
 
 --
@@ -428,14 +402,6 @@ CREATE TABLE `transaksi_iurans` (
   `snap_token` varchar(255) DEFAULT NULL,
   `status_pembayaran` varchar(20) DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `transaksi_iurans`
---
-
-INSERT INTO `transaksi_iurans` (`id`, `user_id`, `tipe_iuran`, `metode_pembayaran`, `jumlah_bayar`, `bukti_bayar`, `tanggal_bayar`, `status`, `created_at`, `updated_at`, `snap_token`, `status_pembayaran`) VALUES
-(1, 12, 'mingguan', 'transfer', 50000, 'bukti_iuran/Gdna0GLsfHHFojbazIIdSwodyiCjdMXx7Dos6SP3.jpg', '2026-05-01 07:20:48', 'valid', '2026-05-01 07:09:19', '2026-05-01 07:20:48', NULL, 'pending'),
-(2, 27, 'mingguan', 'transfer', 50000, NULL, '2026-05-10 06:09:29', 'valid', '2026-05-10 04:29:35', '2026-05-10 06:09:29', NULL, 'pending');
 
 -- --------------------------------------------------------
 
@@ -461,17 +427,7 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id_user`, `username`, `nama_lengkap`, `email`, `password`, `google_id`, `role`, `status`) VALUES
 (1, 'admin_ketua', NULL, 'n.fitriani4444@gmail.com', '$2y$12$aGfzzhCEyp11GzSj9qs7M.qYxcyzogAatl1pO8IqNqNO8BQyj9zDS', '102369711461631714956', 'Ketua', 'Aktif'),
 (2, 'admin_humas', NULL, 'ninirubyjanese@gmail.com', '$2y$12$edrJ8WLrhoXYIC80FFsn1OW3yYsIRt0ovU2x4vCroEl/D.FEy9nfC', '108287896722363002050', 'Humas', 'Aktif'),
-(3, 'admin_bendahara', NULL, 'kkddyy214@gmail.com\r\n', '$2y$12$Sjy/myOnWM8O66CYXOCcZOtInPJt4dvi7SYtj6Qzkcj8tKh604znu', NULL, 'Bendahara', 'Aktif'),
-(5, 'admin_ketua', NULL, NULL, '$2y$12$79H66H1XzWFi3WqZTxo32u3mg7fI4f.lo4vnRwwaqlOYb3dipWifW', NULL, 'Ketua', 'Aktif'),
-(6, 'humas_admin', NULL, NULL, '$2y$12$epgPuk5DBulG0R5fCaZ1Z.Jl/6weNxyHkIz/2lJEUeUvVwNWY9zAq', NULL, 'Humas', 'Aktif'),
-(7, 'bendahara_admin', NULL, 'kkddyy214@gmail.com', '$2y$12$Y4M7gUxyxPhj3jmsJ1wUBON1MEfplwXv35pUug4E2zXSRGpnYnxLq', '113429379078288514365', 'Bendahara', 'Aktif'),
-(12, 'nurulfitriani', NULL, 'nurul@gmail.com', '$2y$12$qa5YzZP3BtU.zmGuUMMqkeILpyJRBcCDI6UDkj1RZqutzQTlYuE0S', NULL, 'Siswa', 'Aktif'),
-(27, 'naelahayati', NULL, 'naela@gmail.com', '$2y$12$FWIyl2Dt.d8u405FD8d7q.WLZUdHOGmQ2437hhEpcn7zzbx.Sh6Q6', NULL, 'Siswa', 'Aktif'),
-(28, 'vira', NULL, 'vira@gmail.com', '$2y$12$Au7k9vBoazUE9v0AG9COO.LjV7Da82yixdCbEeuuyrf4jJwYf2/Pe', NULL, 'Siswa', 'Aktif'),
-(29, 'miaafriyanti', NULL, 'mmauddyy@gmail.com', '$2y$12$6puItt0Tbp0VYA.ouqWumurycOAgGcWbEMoaTKwHkLo68aHI/gm2.', NULL, 'Siswa', 'Aktif'),
-(31, 'karinaaespa', NULL, 'karina@gmail.com', '$2y$12$jrlQFsk.oJaH3l8abbTJN.M2SdKHgMiZEqLo/NPlq/mSu5E22SCPi', NULL, 'Siswa', 'Nonaktif'),
-(32, 'karina', NULL, 'karinaaespa@gmail.com', '$2y$12$sp/r5Yk420lwR82WluwsmOiRqJHv9drQL4ME0fRtSxAvDElOTtqtu', NULL, 'Siswa', 'Aktif'),
-(33, 'dealya', NULL, 'dealya@gmail.com', '$2y$12$.PxR3afO.PUxjH/wMekObOXwBHSWY1LuoYKsQfiGbVc7pZMZDqKDS', NULL, 'Siswa', 'Aktif');
+(7, 'bendahara_admin', NULL, 'kkddyy214@gmail.com', '$2y$12$Y4M7gUxyxPhj3jmsJ1wUBON1MEfplwXv35pUug4E2zXSRGpnYnxLq', '113429379078288514365', 'Bendahara', 'Aktif');
 
 --
 -- Indexes for dumped tables
@@ -608,7 +564,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `absensi`
 --
 ALTER TABLE `absensi`
-  MODIFY `id_absensi` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_absensi` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `galeri`
@@ -626,7 +582,7 @@ ALTER TABLE `informasi_berita`
 -- AUTO_INCREMENT for table `jadwal_latihan`
 --
 ALTER TABLE `jadwal_latihan`
-  MODIFY `id_jadwal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_jadwal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `kontak`
@@ -644,7 +600,7 @@ ALTER TABLE `laporan_keuangan`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `pelatih`
@@ -656,13 +612,13 @@ ALTER TABLE `pelatih`
 -- AUTO_INCREMENT for table `pembayaran`
 --
 ALTER TABLE `pembayaran`
-  MODIFY `id_pembayaran` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_pembayaran` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `pendaftaran`
 --
 ALTER TABLE `pendaftaran`
-  MODIFY `id_pendaftaran` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id_pendaftaran` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `prestasi`
@@ -686,19 +642,19 @@ ALTER TABLE `sanggar`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id_transaction` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_transaction` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `transaksi_iurans`
 --
 ALTER TABLE `transaksi_iurans`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- Constraints for dumped tables

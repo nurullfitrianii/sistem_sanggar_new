@@ -24,7 +24,7 @@
             <!-- QRIS Section -->
             <div class="text-center mb-6">
                 <p class="text-xs text-orange-600 font-bold uppercase mb-2">Scan QRIS untuk Bayar</p>
-                <img src="{{ asset('img/qris2.jpeg') }}" alt="QRIS Sanggar" class="w-56 mx-auto rounded-2xl shadow-lg border border-gray-200 mb-2">
+                <img src="{{ asset('img/qris.jpeg') }}" alt="QRIS Sanggar" class="w-56 mx-auto rounded-2xl shadow-lg border border-gray-200 mb-2">
                 <p class="text-[10px] text-gray-500">Silakan scan QRIS di atas melalui aplikasi e-wallet atau mobile banking pilihan Anda.</p>
             </div>
 

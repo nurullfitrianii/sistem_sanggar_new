@@ -67,12 +67,29 @@
                             <td>
                                 @php
                                     $statusClass = [
-                                        'Menunggu' => 'bg-warning',
+                                        'Menunggu' => 'bg-warning text-dark',
                                         'Aktif'    => 'bg-success',
                                         'Ditolak'  => 'bg-danger'
                                     ][$pendaftaran->status] ?? 'bg-secondary';
+
+                                    $payStatus = strtolower($pendaftaran->status_pembayaran ?? '');
+                                    if (in_array($payStatus, ['success', 'settlement', 'lunas'])) {
+                                        $payBadgeClass = 'bg-success';
+                                        $payLabel = 'Lunas';
+                                    } elseif ($pendaftaran->bukti_bayar) {
+                                        $payBadgeClass = 'bg-warning text-dark';
+                                        $payLabel = 'Menunggu Verifikasi';
+                                    } else {
+                                        $payBadgeClass = 'bg-danger';
+                                        $payLabel = 'Belum Bayar';
+                                    }
                                 @endphp
-                                <span class="badge {{ $statusClass }} px-2 py-1">{{ $pendaftaran->status }}</span>
+                                <div class="mb-1">
+                                    <span class="badge {{ $statusClass }} px-2 py-1">Registrasi: {{ $pendaftaran->status }}</span>
+                                </div>
+                                <div>
+                                    <span class="badge {{ $payBadgeClass }} px-2 py-1">Pembayaran: {{ $payLabel }}</span>
+                                </div>
                             </td>
                             <td class="pe-4 text-end">
                                 @if($pendaftaran->status === 'Menunggu')
